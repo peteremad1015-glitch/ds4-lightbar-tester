@@ -7,9 +7,11 @@
 <meta name="description" content="Test and control your PS4 DualShock 4 or PS5 DualSense controller's lightbar directly from your browser. Live color picker, game-accurate effects (GTA V, inFAMOUS, Spyro, Killzone, Tomb Raider), a demo game, and full gamepad navigation — no software install required.">
 <meta name="keywords" content="DS4 lightbar, DualSense lightbar, DualShock 4 test, PS4 controller color, PS5 controller color, WebHID controller test, controller lightbar tool">
 <meta name="author" content="DS4 Lightbar Tester">
+<link rel="canonical" href="https://peteremad1015-glitch.github.io/ds4-lightbar-tester/">
 
 <!-- Open Graph / social sharing -->
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://peteremad1015-glitch.github.io/ds4-lightbar-tester/">
 <meta property="og:title" content="DS4 & DualSense Lightbar Tester">
 <meta property="og:description" content="Free browser tool to test and control your PS4/PS5 controller's lightbar — live color picker, game-accurate effects, and a demo game.">
 <meta property="og:locale" content="en_US">
@@ -324,6 +326,8 @@
     flex-shrink:0;
   }
   .panel-vol .vol-icon{font-size:13px; opacity:.55;}
+  input[type="range"]{direction:ltr;}
+
   .vol-slider{
     width:72px; height:4px; cursor:pointer;
     accent-color:var(--accent);
@@ -940,7 +944,9 @@ const I18N = {
   'game-over-text': { en: 'Game Over', ar: 'انتهت اللعبة' },
   'game-win-text': { en: 'You Win! 🎉', ar: 'كسبت! 🎉' },
   'game-paused-text': { en: 'Paused', ar: 'متوقفة مؤقتًا' },
-  'game-paused-hint': { en: 'Press Esc or the controller Start button to resume', ar: 'دوس Esc أو زرار Start في اليد للاستمرار' },
+  'game-resume': { en: 'Resume', ar: 'استمرار' },
+  'game-quit': { en: 'Quit Game', ar: 'الخروج من اللعبة' },
+  'game-paused-hint': { en: 'Up/Down to choose, Enter or ✕ to confirm', ar: 'فوق/تحت للاختيار، Enter أو ✕ للتأكيد' },
   'game-score-canvas': { en: 'Score', ar: 'النقاط' },
   'game-note': { en: 'Move the paddle with the arrow keys, A/D, or the connected controller\'s left stick or D-pad — all three work at the same time. Lightbar reactions need the controller connected from the "Connect" section above. The code is plain Canvas API, so it\'s easy to read and modify.', ar: 'حرّك المضرب بالأسهم أو A/D أو بالعصا الشمال/D-pad في اليد المتوصلة — التلاتة شغالين في نفس الوقت. التفاعل مع اللمبة محتاج اليد متوصلة من قسم "الاتصال" فوق. الكود كله بسيط ومكتوب بـ Canvas API عادي عشان تقدر تفهمه وتعدل عليه بسهولة.' },
 };
@@ -1938,6 +1944,7 @@ const gameStartBtn = document.getElementById('gameStartBtn');
 const GW = gameCanvas.width, GH = gameCanvas.height;
 let gState = 'idle'; // idle | playing | over | won
 let gamePaused = false;
+let pauseMenuIndex = 0; // 0 = Resume, 1 = Quit
 let paddle = { x: GW / 2 - 40, y: GH - 24, w: 80, h: 10, speed: 7 };
 let ball = { x: GW / 2, y: GH - 40, r: 6, vx: 3.2, vy: -3.6 };
 let bricks = [];
@@ -2204,20 +2211,73 @@ function drawPauseOverlay() {
   ctx.fillStyle = '#e8ecf5';
   ctx.font = 'bold 24px Cairo, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(t('game-paused-text'), GW / 2, GH / 2 - 6);
-  ctx.font = '13px Cairo, sans-serif';
+  ctx.fillText(t('game-paused-text'), GW / 2, GH / 2 - 34);
+
+  const options = [t('game-resume'), t('game-quit')];
+  options.forEach((label, i) => {
+    const y = GH / 2 + i * 38;
+    if (i === pauseMenuIndex) {
+      ctx.fillStyle = 'rgba(59,130,246,.28)';
+      ctx.fillRect(GW / 2 - 95, y - 22, 190, 32);
+      ctx.fillStyle = '#7dd3fc';
+    } else {
+      ctx.fillStyle = '#9aa3b5';
+    }
+    ctx.font = '17px Cairo, sans-serif';
+    ctx.fillText(label, GW / 2, y);
+  });
+
+  ctx.font = '12px Cairo, sans-serif';
   ctx.fillStyle = '#7a8399';
-  ctx.fillText(t('game-paused-hint'), GW / 2, GH / 2 + 20);
+  ctx.fillText(t('game-paused-hint'), GW / 2, GH / 2 + 96);
 }
 
 function togglePause() {
   if (gState !== 'playing') return;
   gamePaused = !gamePaused;
-  if (gamePaused) drawPauseOverlay();
+  if (gamePaused) {
+    pauseMenuIndex = 0;
+    drawPauseOverlay();
+  }
+}
+
+function selectPauseMenu(idx) {
+  const clamped = Math.max(0, Math.min(1, idx));
+  if (clamped === pauseMenuIndex) return;
+  pauseMenuIndex = clamped;
+  playNavBlip();
+  drawPauseOverlay();
+}
+
+function confirmPauseMenu() {
+  if (pauseMenuIndex === 0) {
+    gamePaused = false;
+    requestAnimationFrame(gameLoop);
+  } else {
+    quitGame();
+  }
+}
+
+function quitGame() {
+  gState = 'idle';
+  gamePaused = false;
+  stopPulse();
+  resetAllPanelGlows();
+  gameStage.classList.remove('expanded');
+  gameCanvas.classList.remove('expanded');
+  gameStartBtn.disabled = false;
+  gameStartBtn.textContent = t('game-start');
+  if (device) transitionToColor(...IDLE_COLOR);
+  drawGame();
 }
 
 window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') togglePause();
+  if (e.key === 'Escape') { togglePause(); return; }
+  if (gState === 'playing' && gamePaused) {
+    if (e.key === 'ArrowUp') { selectPauseMenu(pauseMenuIndex - 1); e.preventDefault(); }
+    else if (e.key === 'ArrowDown') { selectPauseMenu(pauseMenuIndex + 1); e.preventDefault(); }
+    else if (e.key === 'Enter') { confirmPauseMenu(); e.preventDefault(); }
+  }
 });
 
 gameStartBtn.addEventListener('click', () => {
@@ -2330,7 +2390,22 @@ function gamepadNavLoop() {
     if (circlePressed && !prevPad.circle && !stopBtn.disabled) stopBtn.click();
     prevPad.circle = circlePressed;
 
-    if (gState !== 'playing') {
+    if (gState === 'playing' && gamePaused) {
+      // Pause menu: the D-pad/stick up-down and ✕ are otherwise unused while
+      // paused (the paddle only ever moves left-right), so we reuse them here.
+      const axisY = gp.axes[1] || 0;
+      const up = !!(gp.buttons[12] && gp.buttons[12].pressed) || axisY < -PAD_AXIS_THRESHOLD;
+      const down = !!(gp.buttons[13] && gp.buttons[13].pressed) || axisY > PAD_AXIS_THRESHOLD;
+      const cross = !!(gp.buttons[0] && gp.buttons[0].pressed);
+
+      if (up && !prevPad.up) selectPauseMenu(pauseMenuIndex - 1);
+      if (down && !prevPad.down) selectPauseMenu(pauseMenuIndex + 1);
+      if (cross && !prevPad.cross) confirmPauseMenu();
+
+      prevPad.up = up;
+      prevPad.down = down;
+      prevPad.cross = cross;
+    } else if (gState !== 'playing') {
       const axisX = gp.axes[0] || 0;
       const axisY = gp.axes[1] || 0;
 
