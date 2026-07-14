@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://peteremad1015-glitch.github.io/ds4-lightbar-tester/sitemap.xml
