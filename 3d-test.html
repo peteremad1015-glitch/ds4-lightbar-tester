@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Controller Hand Test — DS4, DualSense & Xbox | Live Motion, Triggers & Mic</title>
+<meta name="description" content="Live 3D controller test in your browser: watch a 3D model of your DS4, DualSense, or Xbox controller move with your hands in real time. Test buttons, sticks, adaptive triggers, rumble, and microphone.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://peteremad1015-glitch.github.io/ds4-lightbar-tester/3d-test.html">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html{scroll-behavior:smooth;}
+  *{box-sizing:border-box;}
+  :root{
+    --bg:#0b0e14;
+    --panel:#12161f;
+    --panel-2:#181d29;
+    --line:#232a3a;
+    --text:#e8ecf5;
+    --dim:#7a8399;
+    --accent:#3b82f6;
+    --accent-glow: rgba(59,130,246,.35);
+    --danger:#ef4444;
+    --ok:#22c55e;
+    --warn:#f59e0b;
+  }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 10%, rgba(239,68,68,.05), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Cairo', 'Segoe UI', sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:0 18px 60px;}
+
+  /* ---- Mode choice banner (shared visual language with the lightbar tool) ---- */
+  .mode-banner{
+    display:flex; gap:10px; flex-wrap:wrap;
+    padding:12px 18px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--line);
+    justify-content:center;
+  }
+  .mode-banner a{
+    display:flex; align-items:center; gap:8px;
+    padding:9px 18px;
+    border-radius:999px;
+    font-size:13.5px; font-weight:600;
+    text-decoration:none;
+    border:1px solid var(--line);
+    color:var(--dim);
+    transition:.15s;
+  }
+  .mode-banner a.current{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  .mode-banner a:not(.current):hover{color:var(--text); border-color:var(--accent);}
+
+  header{padding:28px 0 18px;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:.08em;
+    color:var(--accent);
+    text-transform:uppercase;
+    margin-bottom:8px;
+    direction:ltr; text-align:start;
+  }
+  h1{font-size:25px; font-weight:800; margin:0 0 6px;}
+  .sub{color:var(--dim); font-size:14px; line-height:1.7; margin:0;}
+  .seo-intro{color:var(--dim); font-size:12px; line-height:1.7; margin:10px 0 0; opacity:.7;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+  }
+
+  button{
+    font-family:'Cairo', sans-serif;
+    font-weight:600;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  button:active{transform:scale(.97);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+
+  .connect-row{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .dot{width:10px; height:10px; border-radius:50%; background:var(--dim); flex-shrink:0; transition:.3s;}
+  .dot.on{background:var(--ok); box-shadow:0 0 10px var(--ok);}
+  .dot.err{background:var(--danger); box-shadow:0 0 10px var(--danger);}
+  .status-text{font-size:14px; color:var(--dim); flex:1; min-width:180px;}
+  .status-text b{color:var(--text); font-weight:600;}
+
+  .connect-btn{
+    background:var(--accent); color:#fff; padding:11px 22px; font-size:14px;
+    box-shadow:0 4px 16px var(--accent-glow);
+  }
+  .connect-btn:hover:not(:disabled){box-shadow:0 6px 20px var(--accent-glow);}
+
+  .kind-tag{
+    font-family:'JetBrains Mono', monospace; font-size:11px;
+    padding:3px 10px; border-radius:999px; border:1px solid var(--line);
+    color:var(--dim); direction:ltr;
+  }
+  .kind-tag.on{color:var(--accent); border-color:rgba(59,130,246,.4);}
+
+  /* ---- 3D stage ---- */
+  .stage-wrap{
+    position:relative;
+    border-radius:16px;
+    overflow:hidden;
+    background:radial-gradient(circle at 50% 40%, #171d2b 0%, #0a0c12 75%);
+    border:1px solid var(--line);
+    height:min(60vh, 460px);
+  }
+  #stage3d{width:100%; height:100%; display:block;}
+  .stage-hint{
+    position:absolute; bottom:12px; left:0; right:0;
+    text-align:center; font-size:12px; color:var(--dim);
+    pointer-events:none;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .stage-overlay-btn{
+    position:absolute; top:12px; inset-inline-end:12px;
+    background:rgba(18,22,31,.85); backdrop-filter:blur(6px);
+    border:1px solid var(--line); color:var(--text);
+    font-size:12.5px; padding:8px 14px; border-radius:999px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .stage-overlay-btn:hover:not(:disabled){border-color:var(--accent);}
+
+  /* ---- Feature grid ---- */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr;}}
+
+  .feat-card{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+  }
+  .feat-card.unavailable{opacity:.4;}
+  .feat-title{font-size:13.5px; font-weight:700; margin:0 0 10px; display:flex; align-items:center; justify-content:space-between;}
+  .feat-title .unavail-badge{
+    font-size:10.5px; font-weight:600; color:var(--dim);
+    border:1px solid var(--line); padding:2px 8px; border-radius:999px;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .bar-track{
+    height:10px; border-radius:6px; background:var(--panel); overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .bar-fill{height:100%; width:0%; border-radius:6px; transition:width .05s linear; background:var(--accent);}
+
+  .trig-row{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .trig-row:last-child{margin-bottom:0;}
+  .trig-label{font-size:12px; color:var(--dim); width:26px; flex-shrink:0; font-family:'JetBrains Mono', monospace;}
+
+  .stick-box{
+    width:64px; height:64px; border-radius:50%;
+    background:var(--panel); border:1px solid var(--line);
+    position:relative; margin:0 auto;
+  }
+  .stick-dot{
+    width:16px; height:16px; border-radius:50%; background:var(--accent);
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 10px var(--accent-glow);
+    transition:transform .04s linear;
+  }
+  .sticks-row{display:flex; justify-content:space-around; gap:10px;}
+  .stick-cell{text-align:center; font-size:11px; color:var(--dim); font-family:'JetBrains Mono', monospace;}
+
+  .btn-glyphs{display:flex; flex-wrap:wrap; gap:8px;}
+  .btn-glyph{
+    min-width:36px; height:36px; padding:0 10px;
+    border-radius:8px; background:var(--panel); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:var(--dim);
+    font-family:'JetBrains Mono', monospace;
+    transition:.06s;
+  }
+  .btn-glyph.active{
+    background:var(--accent); border-color:var(--accent); color:#fff;
+    box-shadow:0 0 12px var(--accent-glow);
+    transform:scale(1.08);
+  }
+
+  .mic-meter{height:60px; border-radius:10px; background:var(--panel); border:1px solid var(--line); position:relative; overflow:hidden;}
+  .mic-meter-fill{
+    position:absolute; bottom:0; left:0; right:0;
+    background:linear-gradient(0deg, #22c55e, #f59e0b 70%, #ef4444 92%);
+    height:0%; transition:height .04s linear;
+  }
+  .mic-btn{
+    width:100%; background:var(--panel); border:1px solid var(--line); color:var(--text);
+    padding:10px; font-size:13px; margin-top:10px;
+  }
+  .mic-btn:hover:not(:disabled){border-color:var(--accent);}
+
+  .recal-btn{
+    width:100%; background:transparent; border:1px solid var(--line); color:var(--dim);
+    padding:10px; font-size:13px; margin-top:12px;
+  }
+  .recal-btn:hover:not(:disabled){border-color:var(--accent); color:var(--text);}
+
+  .note{
+    font-size:12.5px; color:var(--dim); line-height:1.8;
+    background:var(--panel-2); border-radius:10px; padding:14px 16px;
+    border:1px solid var(--line);
+  }
+
+  .lang-toggle{
+    position:fixed; top:14px; inset-inline-end:14px; z-index:50;
+    display:flex; background:var(--panel); border:1px solid var(--line);
+    border-radius:999px; padding:3px; gap:2px;
+  }
+  .lang-toggle button{
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:600;
+    padding:6px 12px; border-radius:999px; background:transparent; color:var(--dim);
+  }
+  .lang-toggle button.active{background:var(--accent); color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button id="langEnBtn" class="active">EN</button>
+  <button id="langArBtn">AR</button>
+</div>
+
+<div class="mode-banner">
+  <a href="index.html" data-i18n="nav-lightbar">🎨 Lightbar Testing</a>
+  <a href="3d-test.html" class="current" data-i18n="nav-3d">🕹️ 3D Hand Test</a>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow" data-i18n="eyebrow">// WebHID · Live 3D Controller Test</div>
+    <h1 data-i18n="title">3D Controller Hand Test</h1>
+    <p class="sub" data-i18n="subtitle">Watch a live 3D model move with your controller in real time — buttons, sticks, triggers, motion, and microphone, all from your browser.</p>
+    <p class="seo-intro" data-i18n="seo-intro">Test your PlayStation DualShock 4, DualSense, or Xbox controller directly in Chrome or Edge using WebHID and the Gamepad API — see a live 3D model tilt and rotate with your hands, watch buttons light up as you press them, feel rumble on the triggers, and check your controller's built-in microphone, with no software install required.</p>
+  </header>
+
+  <div class="panel">
+    <div class="connect-row">
+      <span id="dot" class="dot"></span>
+      <span id="statusText" class="status-text" data-i18n="status-default">No controller connected yet.</span>
+      <span id="kindTag" class="kind-tag" style="display:none;"></span>
+      <button id="connectBtn" class="connect-btn" data-i18n="connect-btn">Connect Controller</button>
+    </div>
+    <div class="note" style="margin-top:14px;" data-i18n="xbox-hint">
+      Using an Xbox controller? Just connect it to your PC and press any button on it — it's detected automatically, no button needed above.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="stage-wrap">
+      <canvas id="stage3d"></canvas>
+      <button id="recalBtnOverlay" class="stage-overlay-btn" disabled data-i18n="recalibrate">↺ Recalibrate</button>
+      <div class="stage-hint" data-i18n="stage-hint" id="stageHint">Connect a controller to see it move here</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="feat-card">
+      <p class="feat-title" data-i18n="card-buttons">Buttons</p>
+      <div class="btn-glyphs" id="btnGlyphs"></div>
+    </div>
+
+    <div class="feat-card">
+      <p class="feat-title" data-i18n="card-sticks">Sticks</p>
+      <div class="sticks-row">
+        <div class="stick-cell">
+          <div class="stick-box"><div class="stick-dot" id="stickL"></div></div>
+          <span data-i18n="stick-left">Left</span>
+        </div>
+        <div class="stick-cell">
+          <div class="stick-box"><div class="stick-dot" id="stickR"></div></div>
+          <span data-i18n="stick-right">Right</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <p class="feat-title" data-i18n="card-triggers">Triggers &amp; Rumble</p>
+      <div class="trig-row">
+        <span class="trig-label">L2</span>
+        <div class="bar-track"><div class="bar-fill" id="l2Fill" style="background:#3b82f6;"></div></div>
+      </div>
+      <div class="trig-row">
+        <span class="trig-label">R2</span>
+        <div class="bar-track"><div class="bar-fill" id="r2Fill" style="background:#ef4444;"></div></div>
+      </div>
+    </div>
+
+    <div class="feat-card" id="micCard">
+      <p class="feat-title"><span data-i18n="card-mic">Microphone</span><span class="unavail-badge" id="micBadge" data-i18n="unavailable">unavailable</span></p>
+      <div class="mic-meter"><div class="mic-meter-fill" id="micFill"></div></div>
+      <button id="micBtn" class="mic-btn" disabled data-i18n="mic-btn">Test Microphone</button>
+    </div>
+  </div>
+
+  <div class="note" id="featureLegend">
+    <b data-i18n="legend-title">Feature availability by controller:</b><br>
+    <span data-i18n="legend-ds4">DS4 (PS4): buttons, sticks, triggers, lightbar, motion sensor — no microphone, no adaptive triggers.</span><br>
+    <span data-i18n="legend-dualsense">DualSense (PS5): everything DS4 has, plus built-in microphone and adaptive trigger resistance.</span><br>
+    <span data-i18n="legend-xbox">Xbox controller: buttons, sticks, triggers, rumble — no motion sensor, no microphone, no lightbar (the hardware itself doesn't have these).</span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+<script>
+// ==================== i18n ====================
+const I18N = {
+  'nav-lightbar': { en: '🎨 Lightbar Testing', ar: '🎨 اختبار الأضواء' },
+  'nav-3d': { en: '🕹️ 3D Hand Test', ar: '🕹️ تجربة اليد 3D' },
+  'eyebrow': { en: '// WebHID · Live 3D Controller Test', ar: '// WebHID · تجربة يد ثلاثية الأبعاد حية' },
+  'title': { en: '3D Controller Hand Test', ar: 'تجربة اليد ثلاثية الأبعاد' },
+  'subtitle': { en: 'Watch a live 3D model move with your controller in real time — buttons, sticks, triggers, motion, and microphone, all from your browser.', ar: 'شوف مجسم ثلاثي الأبعاد بيتحرك مع يدك لحظة بلحظة — الأزرار، العصايتين، الزناد، الحركة، والمايك، كل ده من المتصفح.' },
+  'seo-intro': { en: "Test your PlayStation DualShock 4, DualSense, or Xbox controller directly in Chrome or Edge using WebHID and the Gamepad API — see a live 3D model tilt and rotate with your hands, watch buttons light up as you press them, feel rumble on the triggers, and check your controller's built-in microphone, with no software install required.", ar: 'اختبر يد DualShock 4 أو DualSense أو Xbox مباشرة من Chrome أو Edge باستخدام WebHID وGamepad API — شوف مجسم ثلاثي الأبعاد بيميل ويلف مع حركة يدك، وشوف الأزرار بتضيء أول ما تدوس عليها، حس بالاهتزاز في الزناد، واختبر المايك المدمج في اليد، من غير أي تحميل برامج.' },
+  'status-default': { en: 'No controller connected yet.', ar: 'مفيش يد متوصلة دلوقتي.' },
+  'connect-btn': { en: 'Connect Controller', ar: 'وصّل اليد' },
+  'connect-btn-done': { en: 'Connected ✓', ar: 'متوصلة ✓' },
+  'status-connected-suffix': { en: 'connected', ar: 'متوصلة' },
+  'status-error': { en: 'Something went wrong while connecting. Make sure the controller shows up in the OS and try again.', ar: 'حصل خطأ أثناء التوصيل. اتأكد إن اليد ظاهرة في نظام التشغيل وجرب تاني.' },
+  'xbox-hint': { en: "Using an Xbox controller? Just connect it to your PC and press any button on it — it's detected automatically, no button needed above.", ar: 'معاك يد Xbox؟ وصّلها بالجهاز ودوس أي زرار فيها - بتتكشف تلقائي، مش محتاج تدوس زرار فوق خالص.' },
+  'recalibrate': { en: '↺ Recalibrate', ar: '↺ إعادة ضبط' },
+  'stage-hint': { en: 'Connect a controller to see it move here', ar: 'وصّل اليد عشان تشوفها بتتحرك هنا' },
+  'stage-hint-ds4': { en: 'DualShock 4 — move your controller to tilt it', ar: 'DualShock 4 — حرّك اليد عشان تميلها' },
+  'stage-hint-dualsense': { en: 'DualSense — move your controller to tilt it', ar: 'DualSense — حرّك اليد عشان تميلها' },
+  'stage-hint-xbox': { en: 'Xbox controller — buttons, sticks & triggers only (no motion sensor)', ar: 'يد Xbox — الأزرار والعصايتين والزناد بس (مفيش حساس حركة)' },
+  'card-buttons': { en: 'Buttons', ar: 'الأزرار' },
+  'card-sticks': { en: 'Sticks', ar: 'العصايتين' },
+  'stick-left': { en: 'Left', ar: 'الشمال' },
+  'stick-right': { en: 'Right', ar: 'اليمين' },
+  'card-triggers': { en: 'Triggers & Rumble', ar: 'الزناد والاهتزاز' },
+  'card-mic': { en: 'Microphone', ar: 'المايك' },
+  'unavailable': { en: 'unavailable', ar: 'مش متاح' },
+  'mic-btn': { en: 'Test Microphone', ar: 'اختبر المايك' },
+  'mic-btn-stop': { en: 'Stop Testing', ar: 'إيقاف الاختبار' },
+  'mic-btn-unavailable': { en: 'Not available on this controller', ar: 'مش متاح في اليد دي' },
+  'legend-title': { en: 'Feature availability by controller:', ar: 'الميزات المتاحة حسب نوع اليد:' },
+  'legend-ds4': { en: 'DS4 (PS4): buttons, sticks, triggers, lightbar, motion sensor — no microphone, no adaptive triggers.', ar: 'DS4 (PS4): الأزرار، العصايتين، الزناد، اللمبة، حساس الحركة — من غير مايك أو زناد تكيفي.' },
+  'legend-dualsense': { en: 'DualSense (PS5): everything DS4 has, plus built-in microphone and adaptive trigger resistance.', ar: 'DualSense (PS5): كل حاجة موجودة في DS4، زائد مايك مدمج ومقاومة تكيفية في الزناد.' },
+  'legend-xbox': { en: "Xbox controller: buttons, sticks, triggers, rumble — no motion sensor, no microphone, no lightbar (the hardware itself doesn't have these).", ar: 'يد Xbox: الأزرار، العصايتين، الزناد، الاهتزاز — من غير حساس حركة أو مايك أو لمبة (الهاردوير نفسه مالوش الحاجات دي أصلاً).' },
+};
+
+let currentLang = localStorage.getItem('ds4-lang') || 'en';
+
+function t(key) {
+  return (I18N[key] && I18N[key][currentLang]) || key;
+}
+
+function applyStaticI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (!I18N[key]) return;
+    el.innerHTML = I18N[key][currentLang];
+  });
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('ds4-lang', lang);
+  const html = document.getElementById('htmlRoot');
+  html.lang = lang;
+  html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+  document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
+  applyStaticI18n();
+  refreshDynamicText();
+}
+
+function refreshDynamicText() {
+  if (device && device.opened) {
+    const defaultName = deviceKind === 'dualsense' ? 'DualSense' : 'DualShock 4';
+    const platformLabel = deviceKind === 'dualsense' ? 'PS5' : 'PS4';
+    statusText.innerHTML = `<b>${device.productName || defaultName}</b> (${platformLabel}) ${t('status-connected-suffix')}`;
+    connectBtn.textContent = t('connect-btn-done');
+  }
+  if (activeKind) updateStageHint();
+  if (micActive) {
+    micBtn.textContent = t('mic-btn-stop');
+  } else if (micBtn) {
+    micBtn.textContent = micAvailable ? t('mic-btn') : t('mic-btn-unavailable');
+  }
+}
+
+document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
+document.getElementById('langArBtn').addEventListener('click', () => setLanguage('ar'));
+
+// ==================== DOM refs ====================
+const dot = document.getElementById('dot');
+const statusText = document.getElementById('statusText');
+const kindTag = document.getElementById('kindTag');
+const connectBtn = document.getElementById('connectBtn');
+const stageHint = document.getElementById('stageHint');
+const recalBtnOverlay = document.getElementById('recalBtnOverlay');
+const btnGlyphs = document.getElementById('btnGlyphs');
+const stickL = document.getElementById('stickL');
+const stickR = document.getElementById('stickR');
+const l2Fill = document.getElementById('l2Fill');
+const r2Fill = document.getElementById('r2Fill');
+const micCard = document.getElementById('micCard');
+const micBadge = document.getElementById('micBadge');
+const micFill = document.getElementById('micFill');
+const micBtn = document.getElementById('micBtn');
+
+// ==================== Global state ====================
+let device = null;
+let deviceKind = null;     // 'ds4' | 'dualsense' | null
+let mode = null;           // 'usb' | 'bt'
+let activeKind = null;     // 'ds4' | 'dualsense' | 'xbox' — whichever is actively driving the 3D stage
+let btSeq = 0;
+let micAvailable = false;
+let micActive = false;
+
+// Orientation (radians), driven by the gyro+accel complementary filter
+let orientPitch = 0, orientRoll = 0;
+let orientYaw = 0;
+let lastMotionTime = null;
+
+// Live input state, used every render frame
+const inputState = {
+  buttons: {},      // name -> bool
+  stickLX: 0, stickLY: 0, stickRX: 0, stickRY: 0, // -1..1
+  l2: 0, r2: 0,      // 0..1
+};
+
+// ==================== Three.js scene ====================
+const stageCanvas = document.getElementById('stage3d');
+const renderer = new THREE.WebGLRenderer({ canvas: stageCanvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+camera.position.set(0, 0.35, 6.2);
+camera.lookAt(0, 0, 0);
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+keyLight.position.set(3, 4, 5);
+scene.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0x8899ff, 0.5);
+fillLight.position.set(-4, -1, 2);
+scene.add(fillLight);
+const rimLight = new THREE.DirectionalLight(0xff6644, 0.35);
+rimLight.position.set(-2, 3, -4);
+scene.add(rimLight);
+scene.add(new THREE.AmbientLight(0x404050, 0.7));
+
+function resizeStage() {
+  const w = stageCanvas.clientWidth, h = stageCanvas.clientHeight;
+  if (w === 0 || h === 0) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resizeStage).observe(stageCanvas);
+
+// ==================== Procedural controller models ====================
+// No external 3D model files are used — each controller is built from
+// primitive Three.js geometry, shaped and colored distinctly enough to be
+// clearly recognizable as its own controller, with named parts exposed on
+// group.userData.parts so the render loop can animate/light them individually.
+
+function roundedBoxGeo(w, h, d, radius, seg = 4) {
+  // Simple rounded box via a merged shape extrude — cheap and good enough for a stylized model.
+  const shape = new THREE.Shape();
+  const x = -w / 2, y = -h / 2;
+  const r = Math.min(radius, w / 2, h / 2);
+  shape.moveTo(x, y + r);
+  shape.lineTo(x, y + h - r);
+  shape.quadraticCurveTo(x, y + h, x + r, y + h);
+  shape.lineTo(x + w - r, y + h);
+  shape.quadraticCurveTo(x + w, y + h, x + w, y + h - r);
+  shape.lineTo(x + w, y + r);
+  shape.quadraticCurveTo(x + w, y, x + w - r, y);
+  shape.lineTo(x + r, y);
+  shape.quadraticCurveTo(x, y, x, y + r);
+  return new THREE.ExtrudeGeometry(shape, { depth: d, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: seg, curveSegments: seg });
+}
+
+function makeButton(radius, color, height = 0.05) {
+  const geo = new THREE.CylinderGeometry(radius, radius, height, 20);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.1 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = Math.PI / 2;
+  mesh.userData.baseColor = color;
+  return mesh;
+}
+
+function placeButton(mesh, x, y, z) {
+  mesh.position.set(x, y, z);
+  mesh.userData.baseY = y; // recorded AFTER placing, so the press-depth animation offsets from the real resting position
+  return mesh;
+}
+
+function makeStick(baseColor) {
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.26, 0.26, 0.1, 24),
+    new THREE.MeshStandardMaterial({ color: 0x14171f, roughness: 0.6 })
+  );
+  const cap = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 20, 16),
+    new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.5 })
+  );
+  cap.position.y = 0.13;
+  cap.scale.y = 0.7;
+  group.add(base, cap);
+  group.userData.cap = cap;
+  return group;
+}
+
+function buildPlayStationBody(kind) {
+  // kind: 'ds4' | 'dualsense' — shared silhouette, different materials/lightbar shape.
+  const group = new THREE.Group();
+  const isDS = kind === 'dualsense';
+
+  const bodyColor = isDS ? 0xe9ecf1 : 0x2b3040;
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.55, metalness: 0.08 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x1b1e27, roughness: 0.55, metalness: 0.1 });
+
+  // Main flattened body
+  const body = new THREE.Mesh(roundedBoxGeo(3.2, 1.5, 0.5, 0.35, 5), bodyMat);
+  group.add(body);
+
+  // Two grips (capsules), angled down from the body
+  const gripGeo = new THREE.CapsuleGeometry(0.42, 1.15, 8, 16);
+  const gripL = new THREE.Mesh(gripGeo, isDS ? darkMat : bodyMat);
+  gripL.position.set(-1.15, -0.95, 0);
+  gripL.rotation.z = 0.32;
+  const gripR = gripL.clone();
+  gripR.position.x = 1.15;
+  gripR.rotation.z = -0.32;
+  group.add(gripL, gripR);
+
+  // Touchpad
+  const touchpad = new THREE.Mesh(
+    roundedBoxGeo(1.5, 0.62, 0.06, 0.12, 3),
+    new THREE.MeshStandardMaterial({ color: 0x0e1017, roughness: 0.3, metalness: 0.2 })
+  );
+  touchpad.position.set(0, 0.28, 0.29);
+  group.add(touchpad);
+
+  // Lightbar
+  let lightbar;
+  if (isDS) {
+    // DualSense: thin glowing strip along the top edge of the touchpad area
+    lightbar = new THREE.Mesh(
+      new THREE.BoxGeometry(1.62, 0.08, 0.1),
+      new THREE.MeshStandardMaterial({ color: 0x2266ff, emissive: 0x2266ff, emissiveIntensity: 1.4, roughness: 0.3 })
+    );
+    lightbar.position.set(0, 0.63, 0.32);
+  } else {
+    // DS4: classic single strip along the very top edge of the body
+    lightbar = new THREE.Mesh(
+      new THREE.BoxGeometry(1.9, 0.09, 0.14),
+      new THREE.MeshStandardMaterial({ color: 0x2266ff, emissive: 0x2266ff, emissiveIntensity: 1.4, roughness: 0.3 })
+    );
+    lightbar.position.set(0, 0.79, 0.1);
+  }
+  group.add(lightbar);
+
+  // Sticks — left higher, right lower (DS4/DualSense layout)
+  const stickL = makeStick(0x33384a);
+  stickL.position.set(-0.62, 0.15, 0.32);
+  const stickR = makeStick(0x33384a);
+  stickR.position.set(0.28, -0.32, 0.32);
+  group.add(stickL, stickR);
+
+  // Face buttons (right cluster): Triangle/Circle/Cross/Square
+  const faceColors = { triangle: 0x22d3a8, circle: 0xef4a6a, cross: 0x5fa8ff, square: 0xff8fd8 };
+  const btnTriangle = makeButton(0.15, faceColors.triangle);
+  placeButton(btnTriangle, 1.32, 0.42, 0.32);
+  const btnCircle = makeButton(0.15, faceColors.circle);
+  placeButton(btnCircle, 1.55, 0.15, 0.32);
+  const btnCross = makeButton(0.15, faceColors.cross);
+  placeButton(btnCross, 1.32, -0.12, 0.32);
+  const btnSquare = makeButton(0.15, faceColors.square);
+  placeButton(btnSquare, 1.09, 0.15, 0.32);
+  group.add(btnTriangle, btnCircle, btnCross, btnSquare);
+
+  // D-pad (left cluster) — one cross-shaped mesh, we treat directions separately for glow via material clone per arm
+  const dpadMat = () => new THREE.MeshStandardMaterial({ color: 0x2c303c, roughness: 0.5 });
+  const dpadUp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.08), dpadMat());
+  dpadUp.position.set(-1.15, 0.55, 0.32);
+  const dpadDown = dpadUp.clone(); dpadDown.material = dpadMat(); dpadDown.position.set(-1.15, 0.05, 0.32);
+  const dpadLeft = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.08), dpadMat());
+  dpadLeft.position.set(-1.40, 0.30, 0.32);
+  const dpadRight = dpadLeft.clone(); dpadRight.material = dpadMat(); dpadRight.position.set(-0.90, 0.30, 0.32);
+  group.add(dpadUp, dpadDown, dpadLeft, dpadRight);
+
+  // Shoulder buttons
+  const shoulderMat = () => new THREE.MeshStandardMaterial({ color: 0x272b36, roughness: 0.5 });
+  const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.28), shoulderMat());
+  l1.position.set(-1.15, 0.92, -0.1);
+  const r1 = l1.clone(); r1.material = shoulderMat(); r1.position.x = 1.15;
+  group.add(l1, r1);
+
+  // Triggers (visual only — depress along local Y as they're pressed)
+  const triggerGeo = new THREE.BoxGeometry(0.55, 0.14, 0.4);
+  const l2 = new THREE.Mesh(triggerGeo, shoulderMat());
+  l2.position.set(-1.15, 1.05, -0.42);
+  l2.rotation.x = -0.35;
+  const r2 = l2.clone(); r2.material = shoulderMat(); r2.position.x = 1.15;
+  group.add(l2, r2);
+
+  // Mic LED (DualSense only) — small dot near the touchpad
+  let micLed = null;
+  if (isDS) {
+    micLed = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.05, 0.02, 12),
+      new THREE.MeshStandardMaterial({ color: 0x666666, emissive: 0x222222 })
+    );
+    micLed.rotation.x = Math.PI / 2;
+    micLed.position.set(0, -0.05, 0.33);
+    group.add(micLed);
+  }
+
+  group.userData.parts = {
+    lightbar, touchpad, stickL, stickR,
+    l1, r1, l2, r2,
+    buttons: { triangle: btnTriangle, circle: btnCircle, cross: btnCross, square: btnSquare },
+    dpad: { up: dpadUp, down: dpadDown, left: dpadLeft, right: dpadRight },
+    micLed,
+  };
+  group.scale.setScalar(0.62);
+  return group;
+}
+
+function buildXboxBody() {
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x22252b, roughness: 0.55, metalness: 0.12 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.6 });
+
+  const body = new THREE.Mesh(roundedBoxGeo(3.3, 1.4, 0.5, 0.4, 5), bodyMat);
+  group.add(body);
+
+  const gripGeo = new THREE.CapsuleGeometry(0.46, 1.25, 8, 16);
+  const gripL = new THREE.Mesh(gripGeo, darkMat);
+  gripL.position.set(-1.2, -1.0, 0);
+  gripL.rotation.z = 0.36;
+  const gripR = gripL.clone();
+  gripR.position.x = 1.2;
+  gripR.rotation.z = -0.36;
+  group.add(gripL, gripR);
+
+  // Xbox layout: left stick upper-left, D-pad lower-left, right stick lower-right, ABXY upper-right
+  const stickL = makeStick(0x2c2f38);
+  stickL.position.set(-0.95, 0.35, 0.32);
+  const stickR = makeStick(0x2c2f38);
+  stickR.position.set(0.35, -0.35, 0.32);
+  group.add(stickL, stickR);
+
+  const dpadMat = () => new THREE.MeshStandardMaterial({ color: 0x2c303c, roughness: 0.5 });
+  const dpadUp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.08), dpadMat());
+  dpadUp.position.set(-0.95, -0.55, 0.32);
+  const dpadDown = dpadUp.clone(); dpadDown.material = dpadMat(); dpadDown.position.set(-0.95, -1.05, 0.32);
+  const dpadLeft = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.08), dpadMat());
+  dpadLeft.position.set(-1.20, -0.80, 0.32);
+  const dpadRight = dpadLeft.clone(); dpadRight.material = dpadMat(); dpadRight.position.set(-0.70, -0.80, 0.32);
+  group.add(dpadUp, dpadDown, dpadLeft, dpadRight);
+
+  // ABXY (green/red/blue/yellow)
+  const faceColors = { a: 0x3ddc6b, b: 0xef4a4a, x: 0x4a8fef, y: 0xf5cf3d };
+  const btnY = makeButton(0.15, faceColors.y);
+  placeButton(btnY, 1.15, 0.42, 0.32);
+  const btnB = makeButton(0.15, faceColors.b);
+  placeButton(btnB, 1.38, 0.15, 0.32);
+  const btnA = makeButton(0.15, faceColors.a);
+  placeButton(btnA, 1.15, -0.12, 0.32);
+  const btnX = makeButton(0.15, faceColors.x);
+  placeButton(btnX, 0.92, 0.15, 0.32);
+  group.add(btnY, btnB, btnA, btnX);
+
+  const shoulderMat = () => new THREE.MeshStandardMaterial({ color: 0x272b36, roughness: 0.5 });
+  const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.28), shoulderMat());
+  l1.position.set(-1.2, 0.85, -0.1);
+  const r1 = l1.clone(); r1.material = shoulderMat(); r1.position.x = 1.2;
+  group.add(l1, r1);
+
+  const triggerGeo = new THREE.BoxGeometry(0.55, 0.14, 0.4);
+  const l2 = new THREE.Mesh(triggerGeo, shoulderMat());
+  l2.position.set(-1.2, 0.98, -0.42);
+  l2.rotation.x = -0.35;
+  const r2 = l2.clone(); r2.material = shoulderMat(); r2.position.x = 1.2;
+  group.add(l2, r2);
+
+  group.userData.parts = {
+    lightbar: null, touchpad: null, stickL, stickR,
+    l1, r1, l2, r2,
+    buttons: { triangle: btnY, circle: btnB, cross: btnA, square: btnX }, // reuse the same key names as PS controllers for shared render-loop code
+    dpad: { up: dpadUp, down: dpadDown, left: dpadLeft, right: dpadRight },
+    micLed: null,
+  };
+  group.scale.setScalar(0.62);
+  return group;
+}
+
+let currentModel = null;
+
+function loadModelFor(kind) {
+  if (currentModel) { scene.remove(currentModel); }
+  if (kind === 'ds4') currentModel = buildPlayStationBody('ds4');
+  else if (kind === 'dualsense') currentModel = buildPlayStationBody('dualsense');
+  else if (kind === 'xbox') currentModel = buildXboxBody();
+  else return;
+  scene.add(currentModel);
+  activeKind = kind;
+  buildGlyphGrid(kind);
+  updateStageHint();
+  updateFeatureAvailability();
+}
+
+function updateStageHint() {
+  if (!activeKind) { stageHint.textContent = t('stage-hint'); return; }
+  stageHint.textContent = t('stage-hint-' + activeKind);
+}
+
+// ==================== CRC32 (Bluetooth output reports) ====================
+const crcTable = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ==================== Output reports: rumble + lightbar passthrough ====================
+// Same verified byte layout as the main lightbar tool — only rumble intensity
+// is actively used on this page, but color is kept neutral white throughout.
+function buildDs4UsbReport(r, g, b, rumbleWeak, rumbleStrong) {
+  const data = new Uint8Array(32);
+  data[0] = 0x05; data[1] = 0x07;
+  data[5] = rumbleWeak; data[6] = rumbleStrong;
+  data[7] = r; data[8] = g; data[9] = b;
+  return { reportId: 0x05, data };
+}
+function buildDs4BtReport(r, g, b, rumbleWeak, rumbleStrong) {
+  const data = new Uint8Array(79);
+  data[0] = 0x11; data[1] = 0xC0; data[2] = 0x00; data[3] = 0x07;
+  data[6] = rumbleWeak; data[7] = rumbleStrong;
+  data[8] = r; data[9] = g; data[10] = b;
+  const crcInput = new Uint8Array(2 + 75);
+  crcInput[0] = 0xA2; crcInput[1] = 0x11;
+  crcInput.set(data.subarray(0, 75), 2);
+  const crc = crc32(crcInput);
+  data[75] = crc & 0xFF; data[76] = (crc >> 8) & 0xFF; data[77] = (crc >> 16) & 0xFF; data[78] = (crc >> 24) & 0xFF;
+  return { reportId: 0x11, data };
+}
+function buildDualSenseUsbReport(r, g, b, rumbleWeak, rumbleStrong) {
+  const data = new Uint8Array(63);
+  data[0] = 0x02;
+  data[1] = (rumbleWeak || rumbleStrong) ? 0x03 : 0x00;
+  data[2] = 0x04;
+  data[3] = rumbleWeak; data[4] = rumbleStrong;
+  data[45] = r; data[46] = g; data[47] = b;
+  return { reportId: 0x02, data };
+}
+function buildDualSenseBtReport(r, g, b, rumbleWeak, rumbleStrong) {
+  const data = new Uint8Array(78);
+  data[0] = 0x31;
+  data[1] = (btSeq << 4) & 0xF0; btSeq = (btSeq + 1) % 16;
+  data[2] = 0x10;
+  data[3] = (rumbleWeak || rumbleStrong) ? 0x03 : 0x00;
+  data[4] = 0x04;
+  data[5] = rumbleWeak; data[6] = rumbleStrong;
+  data[47] = r; data[48] = g; data[49] = b;
+  const crcInput = new Uint8Array(2 + 74);
+  crcInput[0] = 0xA2; crcInput[1] = 0x31;
+  crcInput.set(data.subarray(0, 74), 2);
+  const crc = crc32(crcInput);
+  data[74] = crc & 0xFF; data[75] = (crc >> 8) & 0xFF; data[76] = (crc >> 16) & 0xFF; data[77] = (crc >> 24) & 0xFF;
+  return { reportId: 0x31, data };
+}
+
+let rumbleUntil = 0;
+async function sendRumble(weak, strong, durationMs = 140) {
+  if (!device || !device.opened) return;
+  rumbleUntil = performance.now() + durationMs;
+  await pushOutputReport(weak, strong);
+}
+async function pushOutputReport(rumbleWeak = 0, rumbleStrong = 0) {
+  if (!device || !device.opened) return;
+  try {
+    let reportId, data;
+    if (deviceKind === 'dualsense') {
+      ({ reportId, data } = mode === 'bt'
+        ? buildDualSenseBtReport(255, 255, 255, rumbleWeak, rumbleStrong)
+        : buildDualSenseUsbReport(255, 255, 255, rumbleWeak, rumbleStrong));
+    } else {
+      ({ reportId, data } = mode === 'bt'
+        ? buildDs4BtReport(255, 255, 255, rumbleWeak, rumbleStrong)
+        : buildDs4UsbReport(255, 255, 255, rumbleWeak, rumbleStrong));
+    }
+    await device.sendReport(reportId, data);
+  } catch (e) { console.error('sendReport failed', e); }
+}
+
+function detectKind(dev) {
+  return (dev.productId === 0x0CE6 || dev.productId === 0x0DF2) ? 'dualsense' : 'ds4';
+}
+function detectMode(dev, kind) {
+  const usbReportId = kind === 'dualsense' ? 0x02 : 0x05;
+  for (const col of dev.collections) {
+    for (const out of (col.outputReports || [])) {
+      if (out.reportId === usbReportId) return 'usb';
+    }
+  }
+  return 'bt';
+}
+
+connectBtn.addEventListener('click', async () => {
+  try {
+    const devices = await navigator.hid.requestDevice({
+      filters: [
+        { vendorId: 0x054C, productId: 0x05C4 },
+        { vendorId: 0x054C, productId: 0x09CC },
+        { vendorId: 0x054C, productId: 0x0CE6 },
+        { vendorId: 0x054C, productId: 0x0DF2 }
+      ]
+    });
+    if (!devices.length) return;
+
+    device = devices[0];
+    if (!device.opened) await device.open();
+
+    deviceKind = detectKind(device);
+    mode = detectMode(device, deviceKind);
+    btSeq = 0;
+
+    if (deviceKind === 'dualsense' && mode === 'bt') {
+      try { await device.receiveFeatureReport(0x05); } catch (e) { /* best-effort */ }
+    }
+
+    dot.className = 'dot on';
+    const defaultName = deviceKind === 'dualsense' ? 'DualSense' : 'DualShock 4';
+    const platformLabel = deviceKind === 'dualsense' ? 'PS5' : 'PS4';
+    statusText.innerHTML = `<b>${device.productName || defaultName}</b> (${platformLabel}) ${t('status-connected-suffix')}`;
+    kindTag.style.display = 'inline-block';
+    kindTag.textContent = (deviceKind === 'dualsense' ? 'DUALSENSE' : 'DS4') + ' · ' + mode.toUpperCase();
+    kindTag.classList.add('on');
+    connectBtn.textContent = t('connect-btn-done');
+    connectBtn.disabled = true;
+    recalBtnOverlay.disabled = false;
+
+    device.removeEventListener('inputreport', handleInputReport);
+    device.addEventListener('inputreport', handleInputReport);
+
+    loadModelFor(deviceKind);
+    micAvailable = (deviceKind === 'dualsense');
+    updateFeatureAvailability();
+
+  } catch (e) {
+    console.error(e);
+    dot.className = 'dot err';
+    statusText.textContent = t('status-error');
+  }
+});
+
+// ==================== Input report parsing ====================
+// Byte offsets below are DataView offsets — WebHID's inputreport event
+// already strips the leading report-ID byte, so every offset here is
+// "one less" than the raw byte position you'd see in most HID dumps/wikis.
+// Motion (gyro/accel) needs a runtime zero — see "Recalibrate" — since the
+// raw sensor has a natural factory bias that varies unit to unit; rather than
+// depending on perfect factory calibration data, this page lets you zero it
+// live, the same way real controller test tools do.
+
+function readI16LE(data, offset) {
+  return data.getInt16(offset, true);
+}
+
+function parseDs4(data, isBt) {
+  const off = isBt ? 2 : 0; // BT frames carry 2 extra header bytes before the same layout as USB
+  const lx = data.getUint8(off + 0), ly = data.getUint8(off + 1);
+  const rx = data.getUint8(off + 2), ry = data.getUint8(off + 3);
+  const l2 = data.getUint8(off + 4), r2 = data.getUint8(off + 5);
+  const b5 = data.getUint8(off + 6); // dpad (low nibble) + Square/Cross/Circle/Triangle (high nibble)
+  const b6 = data.getUint8(off + 7); // L1/R1/L2/R2/Share/Options/L3/R3
+  const dpadVal = b5 & 0x0F;
+
+  const gx = readI16LE(data, off + 12), gy = readI16LE(data, off + 14), gz = readI16LE(data, off + 16);
+  const ax = readI16LE(data, off + 18), ay = readI16LE(data, off + 20), az = readI16LE(data, off + 22);
+
+  return {
+    stickLX: (lx - 128) / 128, stickLY: (ly - 128) / 128,
+    stickRX: (rx - 128) / 128, stickRY: (ry - 128) / 128,
+    l2: l2 / 255, r2: r2 / 255,
+    buttons: {
+      square: !!(b5 & 0x10), cross: !!(b5 & 0x20), circle: !!(b5 & 0x40), triangle: !!(b5 & 0x80),
+      l1: !!(b6 & 0x01), r1: !!(b6 & 0x02),
+      dpadUp: dpadVal === 0 || dpadVal === 1 || dpadVal === 7,
+      dpadRight: dpadVal === 1 || dpadVal === 2 || dpadVal === 3,
+      dpadDown: dpadVal === 3 || dpadVal === 4 || dpadVal === 5,
+      dpadLeft: dpadVal === 5 || dpadVal === 6 || dpadVal === 7,
+    },
+    gyro: { x: gx, y: gy, z: gz },
+    accel: { x: ax, y: ay, z: az },
+  };
+}
+
+function parseDualSense(data, isBt) {
+  const off = isBt ? 2 : 0;
+  const lx = data.getUint8(off + 0), ly = data.getUint8(off + 1);
+  const rx = data.getUint8(off + 2), ry = data.getUint8(off + 3);
+  const l2 = data.getUint8(off + 4), r2 = data.getUint8(off + 5);
+  const b7 = data.getUint8(off + 7); // dpad (low nibble) + Square/Cross/Circle/Triangle (high nibble)
+  const b8 = data.getUint8(off + 8); // L1/R1/L2/R2/Create/Options/L3/R3
+  const dpadVal = b7 & 0x0F;
+
+  const gx = readI16LE(data, off + 12), gy = readI16LE(data, off + 14), gz = readI16LE(data, off + 16);
+  const ax = readI16LE(data, off + 18), ay = readI16LE(data, off + 20), az = readI16LE(data, off + 22);
+
+  return {
+    stickLX: (lx - 128) / 128, stickLY: (ly - 128) / 128,
+    stickRX: (rx - 128) / 128, stickRY: (ry - 128) / 128,
+    l2: l2 / 255, r2: r2 / 255,
+    buttons: {
+      square: !!(b7 & 0x10), cross: !!(b7 & 0x20), circle: !!(b7 & 0x40), triangle: !!(b7 & 0x80),
+      l1: !!(b8 & 0x01), r1: !!(b8 & 0x02),
+      dpadUp: dpadVal === 0 || dpadVal === 1 || dpadVal === 7,
+      dpadRight: dpadVal === 1 || dpadVal === 2 || dpadVal === 3,
+      dpadDown: dpadVal === 3 || dpadVal === 4 || dpadVal === 5,
+      dpadLeft: dpadVal === 5 || dpadVal === 6 || dpadVal === 7,
+    },
+    gyro: { x: gx, y: gy, z: gz },
+    accel: { x: ax, y: ay, z: az },
+  };
+}
+
+// Empirical scale — DS4/DualSense's IMU is not byte-perfectly calibrated here
+// (that needs each unit's factory calibration block); this constant gets the
+// *feel* and responsiveness right, and "Recalibrate" zeroes out any resting tilt.
+const GYRO_SCALE = 1 / 1024;      // raw units → approx. radians/sec
+const ACCEL_DEADZONE = 0.06;
+
+function applyMotion(gyro, accel) {
+  const now = performance.now();
+  if (lastMotionTime === null) { lastMotionTime = now; return; }
+  const dt = Math.min((now - lastMotionTime) / 1000, 0.1);
+  lastMotionTime = now;
+
+  const gPitch = gyro.x * GYRO_SCALE;
+  const gRoll  = gyro.y * GYRO_SCALE;
+  const gYaw   = gyro.z * GYRO_SCALE;
+
+  orientPitch += gPitch * dt;
+  orientRoll  += gRoll  * dt;
+  orientYaw   += gYaw   * dt;
+
+  // Accelerometer-derived tilt (gravity vector), used to slowly correct gyro drift.
+  const ax = accel.x, ay = accel.y, az = accel.z;
+  const mag = Math.sqrt(ax * ax + ay * ay + az * az);
+  if (mag > 1000) { // ignore near-zero/garbage readings
+    const accelPitch = Math.atan2(ax, Math.sqrt(ay * ay + az * az));
+    const accelRoll = Math.atan2(ay, Math.sqrt(ax * ax + az * az));
+    const CORRECTION = 0.02; // complementary filter blend factor
+    orientPitch = orientPitch * (1 - CORRECTION) + accelPitch * CORRECTION;
+    orientRoll = orientRoll * (1 - CORRECTION) + accelRoll * CORRECTION;
+  }
+}
+
+function handleInputReport(event) {
+  const { data, reportId } = event;
+  let parsed = null;
+
+  if (deviceKind === 'dualsense') {
+    if (reportId === 0x01 && data.byteLength > 40) parsed = parseDualSense(data, false);
+    else if (reportId === 0x31 && data.byteLength > 42) parsed = parseDualSense(data, true);
+  } else {
+    if (reportId === 0x01 && data.byteLength > 30) parsed = parseDs4(data, false);
+    else if (reportId === 0x11 && data.byteLength > 32) parsed = parseDs4(data, true);
+  }
+  if (!parsed) return;
+
+  inputState.stickLX = parsed.stickLX; inputState.stickLY = parsed.stickLY;
+  inputState.stickRX = parsed.stickRX; inputState.stickRY = parsed.stickRY;
+  inputState.l2 = parsed.l2; inputState.r2 = parsed.r2;
+  inputState.buttons = parsed.buttons;
+
+  applyMotion(parsed.gyro, parsed.accel);
+
+  // Trigger a short rumble pulse right as a trigger crosses "fully pressed".
+  if (parsed.l2 > 0.95 && !inputState._l2WasFull) sendRumble(90, 40, 90);
+  if (parsed.r2 > 0.95 && !inputState._r2WasFull) sendRumble(40, 130, 110);
+  inputState._l2WasFull = parsed.l2 > 0.95;
+  inputState._r2WasFull = parsed.r2 > 0.95;
+}
+
+recalBtnOverlay.addEventListener('click', () => {
+  // Treats whatever tilt the controller is currently held at as the new
+  // "level" reference — the same idea as a real controller test's recenter button.
+  orientPitch = 0; orientRoll = 0; orientYaw = 0;
+  lastMotionTime = null;
+});
+
+// ==================== Feature availability per controller ====================
+function updateFeatureAvailability() {
+  micCard.classList.toggle('unavailable', !micAvailable);
+  micBadge.style.display = micAvailable ? 'none' : 'inline-block';
+  micBtn.disabled = !micAvailable;
+  micBtn.textContent = micAvailable ? t('mic-btn') : t('mic-btn-unavailable');
+}
+
+// ==================== Button glyph grid ====================
+const GLYPH_SETS = {
+  ds4:       [['triangle','△'],['circle','○'],['cross','✕'],['square','▢'],['l1','L1'],['r1','R1'],['dpadUp','↑'],['dpadDown','↓'],['dpadLeft','←'],['dpadRight','→']],
+  dualsense: [['triangle','△'],['circle','○'],['cross','✕'],['square','▢'],['l1','L1'],['r1','R1'],['dpadUp','↑'],['dpadDown','↓'],['dpadLeft','←'],['dpadRight','→']],
+  xbox:      [['triangle','Y'],['circle','B'],['cross','A'],['square','X'],['l1','LB'],['r1','RB'],['dpadUp','↑'],['dpadDown','↓'],['dpadLeft','←'],['dpadRight','→']],
+};
+let glyphEls = {};
+function buildGlyphGrid(kind) {
+  btnGlyphs.innerHTML = '';
+  glyphEls = {};
+  const set = GLYPH_SETS[kind] || GLYPH_SETS.ds4;
+  set.forEach(([key, label]) => {
+    const el = document.createElement('div');
+    el.className = 'btn-glyph';
+    el.textContent = label;
+    btnGlyphs.appendChild(el);
+    glyphEls[key] = el;
+  });
+}
+
+// ==================== Render loop ====================
+function updateButtonVisuals(buttons, parts) {
+  const map = { triangle: 'triangle', circle: 'circle', cross: 'cross', square: 'square' };
+  Object.keys(map).forEach(k => {
+    const pressed = !!buttons[k];
+    if (glyphEls[k]) glyphEls[k].classList.toggle('active', pressed);
+    const mesh = parts.buttons[map[k]];
+    if (mesh) {
+      mesh.position.y = mesh.userData.baseY - (pressed ? 0.035 : 0);
+      mesh.material.emissive = new THREE.Color(pressed ? mesh.userData.baseColor : 0x000000);
+      mesh.material.emissiveIntensity = pressed ? 0.9 : 0;
+    }
+  });
+  ['dpadUp', 'dpadDown', 'dpadLeft', 'dpadRight'].forEach(k => {
+    const pressed = !!buttons[k];
+    if (glyphEls[k]) glyphEls[k].classList.toggle('active', pressed);
+    const dirKey = k.replace('dpad', '').toLowerCase();
+    const mesh = parts.dpad[dirKey];
+    if (mesh) mesh.material.color.set(pressed ? 0x3b82f6 : 0x2c303c);
+  });
+  ['l1', 'r1'].forEach(k => {
+    const pressed = !!buttons[k];
+    if (glyphEls[k]) glyphEls[k].classList.toggle('active', pressed);
+    const mesh = parts[k];
+    if (mesh) mesh.material.color.set(pressed ? 0x3b82f6 : 0x272b36);
+  });
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  resizeStage();
+
+  if (currentModel) {
+    // Orientation — clamped so the model can't flip unreasonably from noise.
+    currentModel.rotation.x = Math.max(-1.3, Math.min(1.3, orientPitch));
+    currentModel.rotation.z = Math.max(-1.3, Math.min(1.3, -orientRoll));
+    currentModel.rotation.y = orientYaw % (Math.PI * 2);
+
+    const parts = currentModel.userData.parts;
+
+    // Sticks
+    if (parts.stickL) parts.stickL.rotation.set(inputState.stickLY * 0.5, 0, -inputState.stickLX * 0.5);
+    if (parts.stickR) parts.stickR.rotation.set(inputState.stickRY * 0.5, 0, -inputState.stickRX * 0.5);
+
+    // Triggers — visually depress with press depth
+    if (parts.l2) parts.l2.rotation.x = -0.35 + inputState.l2 * 0.55;
+    if (parts.r2) parts.r2.rotation.x = -0.35 + inputState.r2 * 0.55;
+
+    // Buttons (only meaningful once we've actually parsed a report — Xbox path sets buttons via Gamepad API too)
+    updateButtonVisuals(inputState.buttons, parts);
+
+    // Lightbar stays a calm idle white on this page unless you're mid-rumble-pulse
+    if (parts.lightbar) {
+      const pulsing = performance.now() < rumbleUntil;
+      parts.lightbar.material.color.set(pulsing ? 0xff6644 : 0x2266ff);
+      parts.lightbar.material.emissive.set(pulsing ? 0xff6644 : 0x2266ff);
+    }
+  }
+
+  // 2D HUD: stick dots
+  stickL.style.transform = `translate(calc(-50% + ${inputState.stickLX * 20}px), calc(-50% + ${inputState.stickLY * 20}px))`;
+  stickR.style.transform = `translate(calc(-50% + ${inputState.stickRX * 20}px), calc(-50% + ${inputState.stickRY * 20}px))`;
+  l2Fill.style.width = (inputState.l2 * 100) + '%';
+  r2Fill.style.width = (inputState.r2 * 100) + '%';
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ==================== Microphone test (DualSense only — real hardware, not HID) ====================
+// The controller's mic isn't exposed through HID at all; it shows up as a
+// normal OS audio input device once the controller is connected over USB.
+// We can't force-select it programmatically — the browser's own permission
+// prompt lets you pick which input device to use, same as any other mic app.
+let micStream = null, micAudioCtx = null, micAnalyser = null, micRafId = null;
+
+async function startMicTest() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = micAudioCtx.createMediaStreamSource(micStream);
+    micAnalyser = micAudioCtx.createAnalyser();
+    micAnalyser.fftSize = 512;
+    source.connect(micAnalyser);
+
+    const data = new Uint8Array(micAnalyser.frequencyBinCount);
+    const loop = () => {
+      micAnalyser.getByteTimeDomainData(data);
+      let peak = 0;
+      for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128));
+      const level = Math.min(100, (peak / 128) * 160);
+      micFill.style.height = level + '%';
+      micRafId = requestAnimationFrame(loop);
+    };
+    loop();
+
+    micActive = true;
+    micBtn.textContent = t('mic-btn-stop');
+  } catch (e) {
+    console.error('mic error', e);
+    micActive = false;
+  }
+}
+
+function stopMicTest() {
+  if (micRafId) cancelAnimationFrame(micRafId);
+  if (micStream) micStream.getTracks().forEach(tr => tr.stop());
+  if (micAudioCtx) micAudioCtx.close();
+  micStream = null; micAudioCtx = null; micAnalyser = null;
+  micFill.style.height = '0%';
+  micActive = false;
+  micBtn.textContent = t('mic-btn');
+}
+
+micBtn.addEventListener('click', () => {
+  if (micActive) stopMicTest(); else startMicTest();
+});
+
+// ==================== Xbox controller (via standard Gamepad API) ====================
+// Xbox pads don't have a lightbar, motion sensor, or mic — nothing to read
+// there even in principle — but buttons/sticks/triggers/rumble work great
+// through the browser's standard Gamepad API, no WebHID needed for this one.
+let xboxRumbleUntil = 0;
+
+function pollXboxGamepad() {
+  // Only take over with the Xbox path if there's no active PS controller session.
+  if (!device || !device.opened) {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const pad = Array.from(pads).find(p => p && p.mapping === 'standard'
+      && !/dualsense|ps4|ps5|sony|054c/i.test(p.id));
+
+    if (pad) {
+      if (activeKind !== 'xbox') loadModelFor('xbox');
+
+      inputState.stickLX = pad.axes[0] || 0;
+      inputState.stickLY = pad.axes[1] || 0;
+      inputState.stickRX = pad.axes[2] || 0;
+      inputState.stickRY = pad.axes[3] || 0;
+      inputState.l2 = (pad.buttons[6] && pad.buttons[6].value) || 0;
+      inputState.r2 = (pad.buttons[7] && pad.buttons[7].value) || 0;
+      inputState.buttons = {
+        cross: !!(pad.buttons[0] && pad.buttons[0].pressed),
+        circle: !!(pad.buttons[1] && pad.buttons[1].pressed),
+        square: !!(pad.buttons[2] && pad.buttons[2].pressed),
+        triangle: !!(pad.buttons[3] && pad.buttons[3].pressed),
+        l1: !!(pad.buttons[4] && pad.buttons[4].pressed),
+        r1: !!(pad.buttons[5] && pad.buttons[5].pressed),
+        dpadUp: !!(pad.buttons[12] && pad.buttons[12].pressed),
+        dpadDown: !!(pad.buttons[13] && pad.buttons[13].pressed),
+        dpadLeft: !!(pad.buttons[14] && pad.buttons[14].pressed),
+        dpadRight: !!(pad.buttons[15] && pad.buttons[15].pressed),
+      };
+
+      // No gyro on Xbox pads — hold it level; small idle sway keeps the stage feeling alive.
+      orientPitch *= 0.9; orientRoll *= 0.9;
+
+      const now = performance.now();
+      if ((inputState.l2 > 0.95 || inputState.r2 > 0.95) && now > xboxRumbleUntil && pad.vibrationActuator) {
+        xboxRumbleUntil = now + 150;
+        pad.vibrationActuator.playEffect('dual-rumble', {
+          duration: 120, weakMagnitude: inputState.l2, strongMagnitude: inputState.r2
+        }).catch(() => {});
+      }
+
+      dot.className = 'dot on';
+      statusText.innerHTML = `<b>${pad.id.split('(')[0].trim() || 'Xbox Controller'}</b> ${t('status-connected-suffix')}`;
+      kindTag.style.display = 'inline-block';
+      kindTag.textContent = 'XBOX · GAMEPAD API';
+      kindTag.classList.add('on');
+    }
+  }
+  requestAnimationFrame(pollXboxGamepad);
+}
+pollXboxGamepad();
+
+updateFeatureAvailability();
+setLanguage(currentLang);
+
+</script>
+</body>
+</html>
