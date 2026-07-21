@@ -1,0 +1,3255 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DS4 & DualSense Lightbar Tester — Free Browser Tool (WebHID)</title>
+<meta name="description" content="Test and control your PS4 DualShock 4 or PS5 DualSense controller's lightbar directly from your browser — plus a live 3D Hand Test showing motion, buttons, triggers, and mic. Game-accurate effects (GTA V, inFAMOUS, Spyro, Killzone, Tomb Raider), a demo game, and full gamepad navigation — no software install required.">
+<meta name="keywords" content="DS4 lightbar, DualSense lightbar, DualShock 4 test, PS4 controller color, PS5 controller color, WebHID controller test, controller lightbar tool">
+<meta name="author" content="DS4 Lightbar Tester">
+<link rel="canonical" href="https://peteremad1015-glitch.github.io/ds4-lightbar-tester/">
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="192x192" href="favicon-192.png">
+
+<!-- Open Graph / social sharing -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://peteremad1015-glitch.github.io/ds4-lightbar-tester/">
+<meta property="og:site_name" content="DS4 Lightbar Tester">
+<meta property="og:title" content="DS4 & DualSense Lightbar Tester">
+<meta property="og:description" content="Free browser tool to test your PS4/PS5 controller's lightbar and a live 3D Hand Test — color picker, game-accurate effects, motion tracking, and a demo game.">
+<meta property="og:image" content="https://peteremad1015-glitch.github.io/ds4-lightbar-tester/og-banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ar_AR">
+
+<!-- Twitter/X Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DS4 & DualSense Lightbar Tester">
+<meta name="twitter:description" content="Free browser tool to test your PS4/PS5 controller's lightbar and a live 3D Hand Test — no install required.">
+<meta name="twitter:image" content="https://peteremad1015-glitch.github.io/ds4-lightbar-tester/og-banner.png">
+
+<meta name="robots" content="index, follow">
+
+<!-- Google AdSense site verification -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6244409866960560"
+     crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e14;
+    --panel:#12161f;
+    --panel-2:#181d29;
+    --line:#232a3a;
+    --text:#e8ecf5;
+    --dim:#7a8399;
+    --accent:#3b82f6;
+    --accent-glow: rgba(59,130,246,.35);
+    --danger:#ef4444;
+    --ok:#22c55e;
+    --warn:#f59e0b;
+  }
+  html{scroll-behavior:smooth;}
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 10%, rgba(239,68,68,.05), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Cairo', 'Segoe UI', sans-serif;
+    min-height:100vh;
+    padding:28px 18px 60px;
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+
+  header{margin-bottom:24px;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:.08em;
+    color:var(--accent);
+    text-transform:uppercase;
+    margin-bottom:8px;
+    direction:ltr; text-align:start;
+  }
+  h1{font-size:26px; font-weight:800; margin:0 0 6px;}
+  .sub{color:var(--dim); font-size:14.5px; line-height:1.7; margin:0;}
+  .seo-intro{color:var(--dim); font-size:12.5px; line-height:1.7; margin:10px 0 0; opacity:.75;}
+
+  .bar-strip{
+    height:6px; border-radius:6px; margin:20px 0 26px;
+    background:linear-gradient(90deg,#ef4444,#f59e0b,#22c55e,#3b82f6,#a855f7);
+    box-shadow:0 0 18px rgba(255,255,255,.08);
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+    transition:border-color .4s ease, box-shadow .4s ease;
+  }
+
+  .status-row{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .dot{width:10px; height:10px; border-radius:50%; background:var(--dim); flex-shrink:0; transition:.3s;}
+  .dot.on{background:var(--ok); box-shadow:0 0 10px var(--ok);}
+  .dot.err{background:var(--danger); box-shadow:0 0 10px var(--danger);}
+  .status-text{font-size:14px; color:var(--dim); flex:1; min-width:200px;}
+  .status-text b{color:var(--text); font-weight:600;}
+
+  button{
+    font-family:'Cairo', sans-serif;
+    font-weight:600;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  button:active{transform:scale(.97);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+
+  .connect-btn{
+    background:var(--accent);
+    color:#fff;
+    padding:11px 22px;
+    font-size:14.5px;
+    box-shadow:0 4px 16px var(--accent-glow);
+  }
+  body:not(.gamepad-nav-active) .connect-btn:hover:not(:disabled){box-shadow:0 6px 20px var(--accent-glow);}
+
+  .mode-tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    color:var(--dim);
+    direction:ltr;
+  }
+  .mode-tag.usb{color:var(--ok); border-color:rgba(34,197,94,.4);}
+  .mode-tag.bt{color:var(--accent); border-color:rgba(59,130,246,.4);}
+
+  .section-title{
+    font-size:13px; color:var(--dim); font-weight:600;
+    margin:0 0 14px; display:flex; align-items:center; gap:8px;
+  }
+  .section-title::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:520px){.grid{grid-template-columns:1fr;}}
+
+  .event-btn{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:16px 14px;
+    text-align:right;
+    display:flex; flex-direction:column; gap:4px;
+    font-size:15px;
+  }
+  body:not(.gamepad-nav-active) .event-btn:hover:not(:disabled){
+    border-color:var(--swatch, var(--accent));
+    box-shadow:0 0 16px -2px var(--swatch, var(--accent-glow));
+  }
+  .event-btn .swatch{
+    width:22px; height:22px; border-radius:6px;
+    background:var(--swatch);
+    box-shadow:0 0 10px var(--swatch);
+    margin-bottom:4px;
+  }
+  .event-btn .label{font-weight:600;}
+
+  /* Multi-color / flashing effects preview their real sequence right on the swatch */
+  @keyframes swatchPolice{
+    0%,100%{background:#ef4444; box-shadow:0 0 10px #ef4444;}
+    50%{background:#0a5aff; box-shadow:0 0 10px #0a5aff;}
+  }
+  .swatch-police{animation:swatchPolice 1.1s ease-in-out infinite;}
+
+  @keyframes swatchLowhealth{
+    0%,100%{background:rgb(200,0,0); box-shadow:0 0 10px rgba(200,0,0,.8);}
+    50%{background:rgb(40,0,0); box-shadow:0 0 6px rgba(40,0,0,.5);}
+  }
+  .swatch-lowhealth{animation:swatchLowhealth 1s ease-in-out infinite;}
+
+  @keyframes swatchLowammo{
+    0%,100%{background:rgb(200,120,0); box-shadow:0 0 10px rgba(200,120,0,.8);}
+    50%{background:rgb(60,30,0); box-shadow:0 0 6px rgba(60,30,0,.5);}
+  }
+  .swatch-lowammo{animation:swatchLowammo 1.4s ease-in-out infinite;}
+
+  @keyframes swatchWin{
+    0%,100%{background:#ffd700; box-shadow:0 0 10px #ffd700;}
+    33%{background:#00ff78; box-shadow:0 0 10px #00ff78;}
+    66%{background:#0096ff; box-shadow:0 0 10px #0096ff;}
+  }
+  .swatch-win{animation:swatchWin 1.4s ease-in-out infinite;}
+
+  @keyframes swatchAbility{
+    0%,100%{background:#ffffff; box-shadow:0 0 10px #ffffff;}
+    50%{background:#0a6cff; box-shadow:0 0 10px #0a6cff;}
+  }
+  .swatch-ability{animation:swatchAbility .9s ease-in-out infinite;}
+
+  @keyframes swatchTorch{
+    0%,100%{background:rgb(255,140,0); box-shadow:0 0 10px rgba(255,140,0,.8);}
+    25%{background:rgb(255,170,40); box-shadow:0 0 10px rgba(255,170,40,.8);}
+    50%{background:rgb(255,110,0); box-shadow:0 0 10px rgba(255,110,0,.8);}
+    75%{background:rgb(255,190,60); box-shadow:0 0 10px rgba(255,190,60,.8);}
+  }
+  .swatch-torch{animation:swatchTorch 1.2s ease-in-out infinite;}
+  .event-btn .desc{font-size:12px; color:var(--dim); font-weight:400;}
+
+  .floating-stop-btn{
+    position:fixed;
+    bottom:14px;
+    inset-inline-end:14px;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:10px 16px;
+    border-radius:999px;
+    background:rgba(18,22,31,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Cairo', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    box-shadow:0 6px 20px rgba(0,0,0,.4);
+    transition:transform .15s ease, box-shadow .15s ease, opacity .2s ease, border-color .3s ease;
+  }
+  body:not(.gamepad-nav-active) .floating-stop-btn:hover:not(:disabled){
+    border-color:var(--danger);
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
+  }
+  .floating-stop-btn:active:not(:disabled){transform:translateY(0) scale(.97);}
+  .floating-stop-btn:disabled{opacity:.35; cursor:not-allowed;}
+  .floating-stop-btn .stop-circle-icon{
+    font-size:16px;
+    font-weight:700;
+    color:var(--danger);
+    line-height:1;
+    flex-shrink:0;
+  }
+
+  .note{
+    font-size:12.5px; color:var(--dim); line-height:1.8;
+    background:var(--panel-2);
+    border-radius:10px; padding:14px 16px;
+    border:1px solid var(--line);
+  }
+  .note code{
+    font-family:'JetBrains Mono', monospace;
+    background:rgba(255,255,255,.06);
+    padding:1px 6px; border-radius:5px;
+    direction:ltr; display:inline-block;
+    font-size:11.5px;
+  }
+
+  .unsupported{
+    display:none;
+    background:rgba(239,68,68,.08);
+    border:1px solid rgba(239,68,68,.3);
+    color:#fca5a5;
+    padding:14px 16px;
+    border-radius:10px;
+    font-size:14px;
+    margin-bottom:18px;
+    line-height:1.7;
+  }
+
+  .top-bar{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:10px; flex-wrap:wrap;
+    padding:12px 18px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:100;
+  }
+  .mode-switch{
+    display:flex; gap:6px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:3px;
+  }
+  .mode-btn{
+    display:flex; align-items:center; gap:6px;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13px; font-weight:600;
+    border:none;
+    background:transparent;
+    color:var(--dim);
+    font-family:'Cairo', sans-serif;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .mode-btn.active{background:var(--accent); color:#fff;}
+  .mode-btn:not(.active):hover{color:var(--text);}
+
+  .quicknav{
+    display:flex; gap:8px; flex-wrap:wrap;
+    margin-bottom:20px;
+    align-items:center;
+  }
+  .quicknav a{
+    font-size:12.5px; font-weight:600;
+    color:var(--dim);
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:7px 14px;
+    border-radius:999px;
+    text-decoration:none;
+    transition:.15s;
+  }
+  .quicknav a:hover{color:var(--text); border-color:var(--accent);}
+
+  .lang-anim-overlay{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#0d1018;
+    opacity:0;
+    transition:opacity .18s ease;
+    pointer-events:none;
+  }
+  .lang-anim-overlay.show{opacity:1;}
+
+  #langWavePath{
+    fill:none;
+    stroke-width:4;
+    stroke-linecap:round;
+    filter:drop-shadow(0 0 5px currentColor) drop-shadow(0 0 2px currentColor);
+  }
+
+  .lang-toggle{
+    display:flex;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:3px;
+    gap:2px;
+  }
+  .lang-toggle button{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px; font-weight:600;
+    padding:6px 12px;
+    border-radius:999px;
+    background:transparent;
+    color:var(--dim);
+  }
+  .lang-toggle button.active{
+    background:var(--accent);
+    color:#fff;
+  }
+
+  h2.panel-title{
+    font-size:19px; font-weight:800; margin:0 0 4px;
+    display:flex; align-items:center; gap:8px;
+    scroll-margin-top:20px;
+  }
+  .panel-sub{color:var(--dim); font-size:13px; margin:0 0 16px; line-height:1.6;}
+
+  .panel-header-row{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:12px; flex-wrap:wrap;
+  }
+  .panel-header-row h2.panel-title{margin-bottom:0;}
+  .title-with-icon{display:flex; align-items:center; gap:11px; min-width:0;}
+  .panel-vol{
+    display:flex; align-items:center; gap:6px;
+    flex-shrink:0;
+  }
+  .panel-vol .vol-icon{font-size:13px; opacity:.55;}
+  input[type="range"]{direction:ltr;}
+
+  .vol-slider{
+    width:72px; height:4px; cursor:pointer;
+    accent-color:var(--accent);
+  }
+
+  .game-icon{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; flex-shrink:0;
+    border-radius:10px;
+    color:#fff;
+    background:linear-gradient(145deg, var(--badge-c, #3b82f6), var(--badge-c2, #1a3a6b));
+    box-shadow:0 3px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.25), inset 0 -8px 14px rgba(0,0,0,.18);
+  }
+  .game-icon svg{width:20px; height:20px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.3));}
+  .game-icon .game-icon-text{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:800; font-size:16px;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+
+  .game-stat{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    padding:6px 14px;
+    border-radius:999px;
+    color:var(--dim);
+  }
+  .game-stat b{color:var(--text); font-weight:700;}
+
+  .player-led-btn.active{
+    background:var(--accent) !important;
+    border-color:var(--accent) !important;
+    color:#fff !important;
+    box-shadow:0 0 14px var(--accent-glow);
+  }
+  .mute-led-btn.active{
+    border-color:var(--swatch) !important;
+    box-shadow:0 0 0 1px var(--swatch) inset;
+  }
+
+  #gameCanvas{
+    width:100%;
+    max-width:600px;
+    margin:0 auto;
+    aspect-ratio:600/340;
+    display:block;
+    background:#060810;
+    border:1px solid var(--line);
+    border-radius:12px;
+    touch-action:none;
+    transition:max-width .6s cubic-bezier(.34,1.15,.64,1);
+  }
+  #gameCanvas.expanded{max-width:1000px;}
+
+  .game-stage{display:flex; justify-content:center;}
+  .game-stage.expanded{
+    width:100vw;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+  }
+
+  .gamepad-focus{
+    transform:perspective(700px) scale(1.07) rotateX(6deg) translateY(-2px) !important;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease, border-color .3s ease;
+    box-shadow:0 22px 40px -14px rgba(0,0,0,.55), 0 0 0 3px var(--swatch, var(--accent)), 0 0 26px 6px var(--swatch, var(--accent-glow));
+    border-color:var(--swatch, var(--accent));
+    outline:none !important;
+    position:relative;
+    z-index:5;
+  }
+
+  /* Flashing-type effects: the button's own border/glow actually alternates
+     to match its real click behavior, whether highlighted by mouse hover or
+     gamepad focus. Nothing here touches the real controller or any panel —
+     purely visual, on this one button, until it's actually clicked. */
+  @keyframes btnFlashPolice{
+    0%,100%{border-color:#ef4444; box-shadow:0 0 16px -2px #ef4444;}
+    50%{border-color:#0a5aff; box-shadow:0 0 16px -2px #0a5aff;}
+  }
+  @keyframes btnFlashLowhealth{
+    0%,100%{border-color:rgb(200,0,0); box-shadow:0 0 16px -2px rgba(200,0,0,.8);}
+    50%{border-color:rgb(40,0,0); box-shadow:0 0 12px -2px rgba(40,0,0,.6);}
+  }
+  @keyframes btnFlashLowammo{
+    0%,100%{border-color:rgb(200,120,0); box-shadow:0 0 16px -2px rgba(200,120,0,.8);}
+    50%{border-color:rgb(60,30,0); box-shadow:0 0 12px -2px rgba(60,30,0,.6);}
+  }
+  @keyframes btnFlashWin{
+    0%,100%{border-color:#ffd700; box-shadow:0 0 16px -2px #ffd700;}
+    33%{border-color:#00ff78; box-shadow:0 0 16px -2px #00ff78;}
+    66%{border-color:#0096ff; box-shadow:0 0 16px -2px #0096ff;}
+  }
+  @keyframes btnFlashAbility{
+    0%,100%{border-color:#ffffff; box-shadow:0 0 16px -2px #ffffff;}
+    50%{border-color:#0a6cff; box-shadow:0 0 16px -2px #0a6cff;}
+  }
+  @keyframes btnFlashTorch{
+    0%,100%{border-color:rgb(255,140,0); box-shadow:0 0 16px -2px rgba(255,140,0,.8);}
+    25%{border-color:rgb(255,170,40); box-shadow:0 0 16px -2px rgba(255,170,40,.8);}
+    50%{border-color:rgb(255,110,0); box-shadow:0 0 16px -2px rgba(255,110,0,.8);}
+    75%{border-color:rgb(255,190,60); box-shadow:0 0 16px -2px rgba(255,190,60,.8);}
+  }
+  body:not(.gamepad-nav-active) [data-event="gtav-wanted"]:hover:not(:disabled),
+  [data-event="gtav-wanted"].gamepad-focus{ animation: btnFlashPolice 1.1s ease-in-out infinite; }
+
+  body:not(.gamepad-nav-active) [data-event="lowhealth"]:hover:not(:disabled),
+  [data-event="lowhealth"].gamepad-focus{ animation: btnFlashLowhealth 1s ease-in-out infinite; }
+
+  body:not(.gamepad-nav-active) [data-event="lowammo"]:hover:not(:disabled),
+  [data-event="lowammo"].gamepad-focus{ animation: btnFlashLowammo 1.4s ease-in-out infinite; }
+
+  body:not(.gamepad-nav-active) [data-event="win"]:hover:not(:disabled),
+  [data-event="win"].gamepad-focus{ animation: btnFlashWin 1.4s ease-in-out infinite; }
+
+  body:not(.gamepad-nav-active) [data-event="gtav-ability"]:hover:not(:disabled),
+  [data-event="gtav-ability"].gamepad-focus{ animation: btnFlashAbility .9s ease-in-out infinite; }
+
+  body:not(.gamepad-nav-active) [data-event="tombraider-lit"]:hover:not(:disabled),
+  [data-event="tombraider-lit"].gamepad-focus{ animation: btnFlashTorch 1.2s ease-in-out infinite; }
+
+  /* ==================== 3D Hand Test mode ==================== */
+  .stage-full{
+    position:relative;
+    width:100%; height:calc(100dvh - 62px); /* full viewport minus the persistent top-bar */
+    overflow:hidden;
+    background:radial-gradient(circle at 50% 42%, #171d2b 0%, #0a0c12 78%);
+  }
+  #stage3d{position:absolute; inset:0; width:100%; height:100%; display:block;}
+
+  .connect-hud{
+    position:absolute; top:18px; left:50%; z-index:20;
+    transform:translateX(-50%);
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    justify-content:center;
+    padding:10px 16px; border-radius:999px; max-width:92vw;
+    background:rgba(18,22,31,.75); backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    transition:opacity .3s ease;
+  }
+  .connect-hud.connected{opacity:.55;}
+  .connect-hud.connected:hover{opacity:1;}
+
+  .xbox-hud-hint{
+    position:absolute; top:66px; left:50%; z-index:19;
+    transform:translateX(-50%);
+    font-size:11px; color:var(--dim); text-align:center; max-width:340px;
+    opacity:.65; pointer-events:none;
+  }
+  .stage-hint{
+    position:absolute; bottom:104px; left:0; right:0; z-index:15;
+    text-align:center; font-size:12px; color:var(--dim);
+    pointer-events:none;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .hud-bottom{
+    position:absolute; bottom:14px; left:14px; right:14px; z-index:20;
+    display:flex; align-items:center; justify-content:center;
+    gap:16px; flex-wrap:wrap;
+    padding:12px 18px; border-radius:20px;
+    background:rgba(18,22,31,.75); backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    max-width:96vw; margin:0 auto;
+  }
+  .hud-buttons{display:flex; flex-wrap:wrap; gap:6px; max-width:220px;}
+  .btn-glyph{
+    min-width:30px; height:30px; padding:0 8px;
+    border-radius:7px; background:var(--panel); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:var(--dim);
+    font-family:'JetBrains Mono', monospace;
+    transition:.06s;
+  }
+  .btn-glyph.active{
+    background:var(--accent); border-color:var(--accent); color:#fff;
+    box-shadow:0 0 12px var(--accent-glow);
+    transform:scale(1.1);
+  }
+
+  .hud-sticks{display:flex; gap:8px;}
+  .stick-box{
+    width:40px; height:40px; border-radius:50%;
+    background:var(--panel); border:1px solid var(--line);
+    position:relative;
+  }
+  .stick-dot{
+    width:11px; height:11px; border-radius:50%; background:var(--accent);
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 8px var(--accent-glow);
+    transition:transform .04s linear;
+  }
+
+  .hud-triggers{display:flex; flex-direction:column; gap:6px; width:110px;}
+  .trig-row{display:flex; align-items:center; gap:8px;}
+  .trig-label{font-size:10.5px; color:var(--dim); width:20px; flex-shrink:0; font-family:'JetBrains Mono', monospace;}
+  .bar-track{
+    flex:1; height:8px; border-radius:5px; background:var(--panel); overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .bar-fill{height:100%; width:0%; border-radius:5px; transition:width .05s linear; background:var(--accent);}
+
+  .hud-icon-btn{
+    position:relative;
+    width:40px; height:40px; border-radius:50%;
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    font-size:16px; display:flex; align-items:center; justify-content:center;
+  }
+  .hud-icon-btn:hover:not(:disabled){border-color:var(--accent);}
+  .hud-icon-btn.active{background:var(--accent); border-color:var(--accent); box-shadow:0 0 14px var(--accent-glow);}
+  .unavail-dot{
+    position:absolute; top:-2px; inset-inline-end:-2px;
+    width:9px; height:9px; border-radius:50%;
+    background:var(--panel-2); border:1.5px solid var(--dim);
+    display:none;
+  }
+  .hud-icon-btn:disabled .unavail-dot{display:block;}
+  .mic-meter-mini{
+    width:8px; height:40px; border-radius:5px; background:var(--panel);
+    border:1px solid var(--line); position:relative; overflow:hidden;
+  }
+  .mic-meter-fill{
+    position:absolute; bottom:0; left:0; right:0;
+    background:linear-gradient(0deg, #22c55e, #f59e0b 70%, #ef4444 92%);
+    height:0%; transition:height .04s linear;
+  }
+
+  @media (max-width:640px){
+    .hud-bottom{gap:10px; padding:10px;}
+    .hud-triggers{width:80px;}
+    .hud-buttons{max-width:140px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="mode-switch">
+    <button class="mode-btn active" id="modeLightbarBtn" data-i18n="nav-lightbar">🎨 Lightbar Testing</button>
+    <button class="mode-btn" id="mode3dBtn" data-i18n="nav-3d">🕹️ 3D Hand Test</button>
+  </div>
+  <div class="lang-toggle">
+    <button id="langEnBtn" class="active">EN</button>
+    <button id="langArBtn">AR</button>
+  </div>
+</div>
+
+<div id="langAnimOverlay" class="lang-anim-overlay">
+  <svg viewBox="0 0 400 120" width="380" height="120">
+    <path id="langWavePath" d="M15,60 Q65,15 115,60 T215,60 T315,60 T385,60"/>
+  </svg>
+</div>
+
+<div id="lightbarMode">
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow" data-i18n="eyebrow">// WebHID · Lightbar Event Simulation</div>
+    <h1 data-i18n="title">DS4 Lightbar Event Simulator</h1>
+    <p class="sub" data-i18n="subtitle">Test how the lightbar reacts to in-game events without opening any game. Connect your controller via USB or Bluetooth, then start from any section below.</p>
+    <p class="seo-intro" data-i18n="seo-intro">This free browser-based tool lets you test and control the RGB lightbar on a PlayStation DualShock 4 or DualSense controller straight from Chrome or Edge, using the WebHID API — no drivers or downloads needed. Pick any color with a live Steam-style slider, trigger game-accurate lighting effects from GTA V, inFAMOUS: Second Son, Spyro Reignited Trilogy, Killzone: Shadow Fall, and Tomb Raider, or play a small demo game that reacts to your controller's lightbar in real time.</p>
+  </header>
+
+  <nav class="quicknav">
+    <a href="#connect" data-i18n="nav-connect">Connect</a>
+    <a href="#custom" data-i18n="nav-custom">Custom Color</a>
+    <a href="#events" data-i18n="nav-events">General Events</a>
+    <a href="#gtav" data-i18n="nav-gtav">GTA V</a>
+    <a href="#infamous" data-i18n="nav-infamous">inFAMOUS</a>
+    <a href="#spyro" data-i18n="nav-spyro">Spyro</a>
+    <a href="#killzone" data-i18n="nav-killzone">Killzone</a>
+    <a href="#tombraider" data-i18n="nav-tr">Tomb Raider</a>
+    <a href="#game" data-i18n="nav-game">Demo Game</a>
+  </nav>
+
+  <div class="bar-strip"></div>
+
+  <div id="unsupported" class="unsupported" data-i18n="unsupported">
+    This browser doesn't support WebHID. Open this page in <b>Chrome</b> or <b>Edge</b> on a PC to connect your controller.
+  </div>
+
+  <div class="panel" id="connect">
+    <div class="status-row">
+      <span id="dot" class="dot"></span>
+      <span id="statusText" class="status-text" data-i18n="status-default">No controller connected yet.</span>
+      <span id="modeTag" class="mode-tag" style="display:none;"></span>
+      <span id="batteryTag" class="mode-tag" style="display:none; align-items:center; gap:5px;">
+        <svg width="22" height="12" viewBox="0 0 24 12" style="flex-shrink:0;">
+          <rect x="1" y="1" width="19" height="10" rx="2.2" fill="none" stroke="#9aa3b5" stroke-width="1.3"/>
+          <rect x="20.5" y="4" width="2" height="4" rx="1" fill="#9aa3b5"/>
+          <rect id="batteryFillRect" x="3" y="3" width="0" height="6" rx="1" fill="#e8ecf5"/>
+          <path id="batteryBoltPath" d="M11.5 1.5 L7 6.5 H9.3 L8.2 10.5 L14 5 H11 Z" fill="#fff" style="display:none;"/>
+        </svg>
+        <span id="batteryPercentText">--%</span>
+      </span>
+      <button id="connectBtn" class="connect-btn" data-i18n="connect-btn">Connect Controller</button>
+    </div>
+  </div>
+
+  <div class="panel" id="events">
+    <div class="panel-header-row">
+      <h2 class="panel-title" data-i18n="events-title">🎮 General Events</h2>
+      <div class="panel-vol" data-panel="events">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" data-panel="events" min="0" max="100">
+      </div>
+    </div>
+    <p class="panel-sub" data-i18n="events-sub">Ready-made effects you can build any reaction from for any game or script — click and watch the lightbar respond instantly.</p>
+    <div class="grid">
+      <button class="event-btn" style="--swatch:#ef4444" data-event="damage" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="ev-damage-l">Take Damage</span>
+        <span class="desc" data-i18n="ev-damage-d">Quick red flash</span>
+      </button>
+      <button class="event-btn" style="--swatch:#dc2626" data-event="lowhealth" disabled>
+        <span class="swatch swatch-lowhealth"></span>
+        <span class="label" data-i18n="ev-lowhealth-l">Low Health</span>
+        <span class="desc" data-i18n="ev-lowhealth-d">Slow, continuous red pulse</span>
+      </button>
+      <button class="event-btn" style="--swatch:#3b82f6" data-event="speed" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="ev-speed-l">High Speed</span>
+        <span class="desc" data-i18n="ev-speed-d">Solid, strong blue</span>
+      </button>
+      <button class="event-btn" style="--swatch:#22c55e" data-event="win" disabled>
+        <span class="swatch swatch-win"></span>
+        <span class="label" data-i18n="ev-win-l">Win</span>
+        <span class="desc" data-i18n="ev-win-d">Celebratory color sequence</span>
+      </button>
+      <button class="event-btn" style="--swatch:#f59e0b" data-event="lowammo" disabled>
+        <span class="swatch swatch-lowammo"></span>
+        <span class="label" data-i18n="ev-lowammo-l">Low Ammo</span>
+        <span class="desc" data-i18n="ev-lowammo-d">Light orange pulse</span>
+      </button>
+      <button class="event-btn" style="--swatch:#38bdf8" data-event="idle" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="ev-idle-l">Restore Idle</span>
+        <span class="desc" data-i18n="ev-idle-d">Default calm blue</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="panel" id="custom">
+    <h2 class="panel-title" data-i18n="custom-title">🎨 Custom Color</h2>
+    <p class="panel-sub" data-i18n="custom-sub">Same idea as Steam's LED settings — starts at your connected controller's own default blue, then move any slider and the real lightbar changes instantly.</p>
+
+    <div id="customSwatch" style="height:44px; border-radius:10px; margin-bottom:18px; background:#0a6cff; box-shadow:0 0 24px rgba(10,108,255,.4); transition:background .1s;"></div>
+
+    <div style="margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--dim); margin-bottom:6px;">
+        <span data-i18n="slider-color">Color</span><span id="hueVal">235°</span>
+      </div>
+      <input type="range" id="hueSlider" min="0" max="360" value="235" disabled
+        style="width:100%; height:10px; border-radius:6px; -webkit-appearance:none; background:linear-gradient(90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000); cursor:pointer;">
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--dim); margin-bottom:6px;">
+        <span data-i18n="slider-sat">Saturation</span><span id="satVal">100%</span>
+      </div>
+      <input type="range" id="satSlider" min="0" max="100" value="100" disabled
+        style="width:100%; accent-color:var(--accent); cursor:pointer;">
+    </div>
+
+    <div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--dim); margin-bottom:6px;">
+        <span data-i18n="slider-bri">Brightness</span><span id="briVal">100%</span>
+      </div>
+      <input type="range" id="briSlider" min="0" max="100" value="100" disabled
+        style="width:100%; accent-color:var(--accent); cursor:pointer;">
+    </div>
+
+    <div class="note" style="margin-top:16px;" data-i18n="custom-note">
+      Try to match the color you see in Steam or any game, then reuse that exact degree anywhere else you need it.
+    </div>
+  </div>
+
+  <div class="panel" id="dualSensePanel" style="display:none;">
+    <h2 class="panel-title" data-i18n="ds5-title">🎮 DualSense (PS5) — Extra Lighting</h2>
+    <p class="panel-sub" data-i18n="ds5-sub">DualSense detected automatically — these controls don't exist on DS4, so they only appear now.</p>
+
+    <p style="font-size:13px; color:var(--dim); margin:0 0 8px;" data-i18n="ds5-player-leds">Player Indicator LEDs (below the touchpad)</p>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <button class="player-led-btn" data-led="0" disabled style="flex:1; aspect-ratio:1; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--dim);">1</button>
+      <button class="player-led-btn" data-led="1" disabled style="flex:1; aspect-ratio:1; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--dim);">2</button>
+      <button class="player-led-btn" data-led="2" disabled style="flex:1; aspect-ratio:1; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--dim);">3</button>
+      <button class="player-led-btn" data-led="3" disabled style="flex:1; aspect-ratio:1; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--dim);">4</button>
+      <button class="player-led-btn" data-led="4" disabled style="flex:1; aspect-ratio:1; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--dim);">5</button>
+    </div>
+
+    <p style="font-size:13px; color:var(--dim); margin:0 0 8px;" data-i18n="ds5-mute-led">Mic Mute Button LED</p>
+    <div class="grid">
+      <button class="mute-led-btn event-btn" style="--swatch:#7a8399" data-mute="0" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="ds5-mute-off">Off</span>
+      </button>
+      <button class="mute-led-btn event-btn" style="--swatch:#e8ecf5" data-mute="1" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="ds5-mute-on">On</span>
+      </button>
+      <button class="mute-led-btn event-btn" style="--swatch:#3b82f6" data-mute="2" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="ds5-mute-breathing">Breathing</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="panel" id="gtav">
+    <div class="panel-header-row">
+      <div class="title-with-icon">
+        <span class="game-icon" style="--badge-c:#22c55e;--badge-c2:#0f2e14;"><span class="game-icon-text">V</span></span>
+        <h2 class="panel-title" data-i18n="gtav-title">GTA V — Character Colors</h2>
+      </div>
+      <div class="panel-vol" data-panel="gtav">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" data-panel="gtav" min="0" max="100">
+      </div>
+    </div>
+    <p class="panel-sub" data-i18n="gtav-sub">The colors the game actually sends to the lightbar on PS4 when switching characters.</p>
+    <div class="grid">
+      <button class="event-btn" style="--swatch:#0a6cff" data-event="gtav-michael" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="gtav-michael-l">Michael</span>
+        <span class="desc" data-i18n="gtav-solid">Solid blue</span>
+      </button>
+      <button class="event-btn" style="--swatch:#22c55e" data-event="gtav-franklin" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="gtav-franklin-l">Franklin</span>
+        <span class="desc" data-i18n="gtav-solid-g">Solid green</span>
+      </button>
+      <button class="event-btn" style="--swatch:#ff7a00" data-event="gtav-trevor" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="gtav-trevor-l">Trevor</span>
+        <span class="desc" data-i18n="gtav-solid-o">Solid orange</span>
+      </button>
+      <button class="event-btn" style="--swatch:#ffffff" data-event="gtav-ability" disabled>
+        <span class="swatch swatch-ability"></span>
+        <span class="label" data-i18n="gtav-ability-l">Special Ability</span>
+        <span class="desc" data-i18n="gtav-ability-d">Flashes with the last selected character's color</span>
+      </button>
+      <button class="event-btn" style="--swatch:#ff2020" data-event="gtav-wanted" disabled>
+        <span class="swatch swatch-police"></span>
+        <span class="label" data-i18n="gtav-wanted-l">Wanted Level (Police)</span>
+        <span class="desc" data-i18n="gtav-wanted-d">Alternating red/blue flash</span>
+      </button>
+    </div>
+    <div class="note" style="margin-top:14px;" data-i18n="gtav-note">
+      These are the actually-documented colors the game sends to the lightbar, based on official confirmations from Rockstar and Sony.
+    </div>
+  </div>
+
+  <div class="panel" id="infamous">
+    <div class="panel-header-row">
+      <div class="title-with-icon">
+        <span class="game-icon" style="--badge-c:#1466ff;--badge-c2:#dc141e;"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg></span>
+        <h2 class="panel-title" data-i18n="infamous-title">inFAMOUS: Second Son — Karma</h2>
+      </div>
+      <div class="panel-vol" data-panel="infamous">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" data-panel="infamous" min="0" max="100">
+      </div>
+    </div>
+    <p class="panel-sub" data-i18n="infamous-sub">The lightbar tracks Delsin's Karma live: neutral white at the start, sliding to blue for Good or red for Evil as you play.</p>
+    <div class="grid">
+      <button class="event-btn" style="--swatch:#1466ff" data-event="infamous-good" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="infamous-good-l">Good Karma</span>
+        <span class="desc" data-i18n="infamous-good-d">Solid blue</span>
+      </button>
+      <button class="event-btn" style="--swatch:#dc141e" data-event="infamous-evil" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="infamous-evil-l">Evil Karma</span>
+        <span class="desc" data-i18n="infamous-evil-d">Solid red</span>
+      </button>
+      <button class="event-btn" style="--swatch:#ebebeb" data-event="infamous-neutral" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="infamous-neutral-l">Neutral (Start)</span>
+        <span class="desc" data-i18n="infamous-neutral-d">Off-white</span>
+      </button>
+    </div>
+    <div class="note" style="margin-top:14px;" data-i18n="infamous-note">
+      Documented behavior: the lightbar shifts from neutral white toward deep blue (Good) or red (Evil) as your Karma meter fills.
+    </div>
+  </div>
+
+  <div class="panel" id="spyro">
+    <div class="panel-header-row">
+      <div class="title-with-icon">
+        <span class="game-icon" style="--badge-c:#a855f7;--badge-c2:#4a2166;"><svg viewBox="0 0 24 24"><path d="M12 2c-1.2 3-4 5.2-4 9.3A4 4 0 0012 15.5a4 4 0 004-4.2c0-1.6-.6-2.7-1.3-3.8.4 1 .1 2-.9 2s-1.3-1-1-2c.6-2 .3-3.9-.8-5.5z" fill="currentColor"/></svg></span>
+        <h2 class="panel-title" data-i18n="spyro-title">Spyro Reignited Trilogy — Sparx Health</h2>
+      </div>
+      <div class="panel-vol" data-panel="spyro">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" data-panel="spyro" min="0" max="100">
+      </div>
+    </div>
+    <p class="panel-sub" data-i18n="spyro-sub">Sparx the dragonfly is Spyro's health meter, and the lightbar mirrors his color on PS4.</p>
+    <div class="grid">
+      <button class="event-btn" style="--swatch:#ffc800" data-event="spyro-full" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="spyro-full-l">Full Health</span>
+        <span class="desc" data-i18n="spyro-full-d">Gold / yellow</span>
+      </button>
+      <button class="event-btn" style="--swatch:#1e6eff" data-event="spyro-3" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="spyro-3-l">One Hit Taken</span>
+        <span class="desc" data-i18n="spyro-3-d">Blue</span>
+      </button>
+      <button class="event-btn" style="--swatch:#32c85a" data-event="spyro-2" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="spyro-2-l">Two Hits Taken</span>
+        <span class="desc" data-i18n="spyro-2-d">Green</span>
+      </button>
+      <button class="event-btn" style="--swatch:#e61414" data-event="spyro-critical" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="spyro-critical-l">Sparx Gone (Critical)</span>
+        <span class="desc" data-i18n="spyro-critical-d">Red — one hit from death</span>
+      </button>
+    </div>
+    <div class="note" style="margin-top:14px;" data-i18n="spyro-note">
+      Documented behavior: Sparx (and the lightbar) goes gold → blue → green, then red once Sparx disappears and Spyro is one hit from losing a life.
+    </div>
+  </div>
+
+  <div class="panel" id="killzone">
+    <div class="panel-header-row">
+      <div class="title-with-icon">
+        <span class="game-icon" style="--badge-c:#ef4444;--badge-c2:#6b1414;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5" stroke="currentColor" stroke-width="2"/></svg></span>
+        <h2 class="panel-title" data-i18n="killzone-title">Killzone: Shadow Fall — Health</h2>
+      </div>
+      <div class="panel-vol" data-panel="killzone">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" data-panel="killzone" min="0" max="100">
+      </div>
+    </div>
+    <p class="panel-sub" data-i18n="killzone-sub">One of the very first DS4 lightbar demos — Sony's Shuhei Yoshida showed it live: green fades to red as you take damage, and back to green when healed.</p>
+    <div class="grid">
+      <button class="event-btn" style="--swatch:#22c55e" data-event="killzone-full" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="killzone-full-l">Full Health</span>
+        <span class="desc" data-i18n="killzone-full-d">Green</span>
+      </button>
+      <button class="event-btn" style="--swatch:#f59e0b" data-event="killzone-wounded" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="killzone-wounded-l">Wounded</span>
+        <span class="desc" data-i18n="killzone-wounded-d">Orange (in-between)</span>
+      </button>
+      <button class="event-btn" style="--swatch:#ef4444" data-event="killzone-critical" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="killzone-critical-l">Critical</span>
+        <span class="desc" data-i18n="killzone-critical-d">Red — near death</span>
+      </button>
+    </div>
+    <div class="note" style="margin-top:14px;" data-i18n="killzone-note">
+      Documented behavior: Sony's own worldwide studios chief demonstrated this live in 2013 — health drops shift the lightbar smoothly from green through orange to red, reversing as you heal.
+    </div>
+  </div>
+
+  <div class="panel" id="tombraider">
+    <div class="panel-header-row">
+      <div class="title-with-icon">
+        <span class="game-icon" style="--badge-c:#f59e0b;--badge-c2:#5c2c05;"><svg viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z" fill="currentColor"/><path d="M2 9h20M9 3l3 6-3 12M15 3l-3 6 3 12" stroke="rgba(0,0,0,.3)" stroke-width="1" fill="none"/></svg></span>
+        <h2 class="panel-title" data-i18n="tr-title">Tomb Raider (Definitive Edition) — Torch</h2>
+      </div>
+      <div class="panel-vol" data-panel="tombraider">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" data-panel="tombraider" min="0" max="100">
+      </div>
+    </div>
+    <p class="panel-sub" data-i18n="tr-sub">A fan-favorite detail from launch — the lightbar flickers like real firelight whenever Lara's torch is lit.</p>
+    <div class="grid">
+      <button class="event-btn" style="--swatch:#f59e0b" data-event="tombraider-lit" disabled>
+        <span class="swatch swatch-torch"></span>
+        <span class="label" data-i18n="tr-lit-l">Torch Lit</span>
+        <span class="desc" data-i18n="tr-lit-d">Flickering fire (yellow/orange)</span>
+      </button>
+      <button class="event-btn" style="--swatch:#38bdf8" data-event="tombraider-off" disabled>
+        <span class="swatch"></span>
+        <span class="label" data-i18n="tr-off-l">Torch Out</span>
+        <span class="desc" data-i18n="tr-off-d">Back to idle</span>
+      </button>
+    </div>
+    <div class="note" style="margin-top:14px;" data-i18n="tr-note">
+      Documented behavior, widely praised at launch: the lightbar mimics flickering firelight to match the torch on screen.
+    </div>
+  </div>
+
+  <div class="panel" id="game">
+    <div class="panel-header-row">
+      <h2 class="panel-title" data-i18n="game-title">🕹️ Demo Game — Brick Breaker</h2>
+      <div class="panel-vol" data-panel="game">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" data-panel="game" min="0" max="100">
+      </div>
+    </div>
+    <p class="panel-sub" data-i18n="game-sub">A simple 2D game to test lightbar reactions to real events while playing: break a brick (quick pulse in the brick's color), miss the ball (red flash + rumble), clear the wall (green celebration), or beat your high score (celebratory color sequence).</p>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; font-size:13px;">
+      <div class="game-stat"><span data-i18n="game-score">Score</span>: <b id="gameScore">0</b></div>
+      <div class="game-stat"><span data-i18n="game-high">High Score</span>: <b id="gameHigh">0</b></div>
+      <div class="game-stat"><span data-i18n="game-lives">Lives</span>: <b id="gameLives">❤️❤️❤️</b></div>
+    </div>
+
+    <div id="gameStage" class="game-stage">
+      <div id="gameStage" class="game-stage">
+        <div id="gameStage" class="game-stage">
+          <canvas id="gameCanvas" width="600" height="340"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button id="gameStartBtn" class="connect-btn" style="flex:1;" disabled data-i18n="game-start">Start Game</button>
+    </div>
+
+    <div class="note" style="margin-top:14px;" data-i18n="game-note">
+      Move the paddle with the arrow keys, A/D, or the connected controller's left stick or D-pad — all three work at the same time. Lightbar reactions need the controller connected from the "Connect" section above. The code is plain Canvas API, so it's easy to read and modify.
+    </div>
+  </div>
+
+</div>
+
+<button id="stopBtn" class="floating-stop-btn" disabled>
+  <span class="stop-circle-icon">○</span>
+  <span data-i18n="stop-btn-short">Stop</span>
+</button>
+
+</div><!-- /#lightbarMode -->
+
+<div id="threeDMode" style="display:none;">
+  <div class="stage-full">
+    <canvas id="stage3d"></canvas>
+
+    <div class="connect-hud" id="connectHud3d">
+      <span id="dot3d" class="dot"></span>
+      <span id="statusText3d" class="status-text" data-i18n="status-default">No controller connected yet.</span>
+      <span id="kindTag3d" class="mode-tag" style="display:none;"></span>
+      <button id="connectBtn3d" class="connect-btn" data-i18n="connect-btn">Connect Controller</button>
+    </div>
+    <div class="xbox-hud-hint" id="xboxHudHint" data-i18n="xbox-hint">Using an Xbox controller? Just connect it and press any button — it's detected automatically.</div>
+
+    <div class="stage-hint" id="stageHint" data-i18n="stage-hint">Connect a controller to see it move here</div>
+
+    <div class="hud-bottom">
+      <div class="hud-buttons" id="btnGlyphs"></div>
+
+      <div class="hud-sticks">
+        <div class="stick-box"><div class="stick-dot" id="stickL"></div></div>
+        <div class="stick-box"><div class="stick-dot" id="stickR"></div></div>
+      </div>
+
+      <div class="hud-triggers">
+        <div class="trig-row">
+          <span class="trig-label">L2</span>
+          <div class="bar-track"><div class="bar-fill" id="l2Fill" style="background:#3b82f6;"></div></div>
+        </div>
+        <div class="trig-row">
+          <span class="trig-label">R2</span>
+          <div class="bar-track"><div class="bar-fill" id="r2Fill" style="background:#ef4444;"></div></div>
+        </div>
+      </div>
+
+      <button id="micBtn" class="hud-icon-btn" disabled title="Microphone">
+        🎤<span class="unavail-dot" id="micBadge"></span>
+      </button>
+      <div class="mic-meter-mini"><div class="mic-meter-fill" id="micFill"></div></div>
+
+      <button id="recalBtnOverlay" class="hud-icon-btn" disabled data-i18n-title="recalibrate" title="Recalibrate">↺</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="note" id="featureLegend">
+      <b data-i18n="legend-title">Feature availability by controller:</b><br>
+      <span data-i18n="legend-ds4">DS4 (PS4): buttons, sticks, triggers, lightbar, motion sensor — no microphone, no adaptive triggers.</span><br>
+      <span data-i18n="legend-dualsense">DualSense (PS5): everything DS4 has, plus built-in microphone and adaptive trigger resistance.</span><br>
+      <span data-i18n="legend-xbox">Xbox controller: buttons, sticks, triggers, rumble — no motion sensor, no microphone, no lightbar (the hardware itself doesn't have these).</span>
+    </div>
+  </div>
+</div><!-- /#threeDMode -->
+
+<script type="module">
+  import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.185.0/three.module.min.js';
+  window.THREE = THREE;
+  window.dispatchEvent(new Event('three-ready'));
+</script>
+
+<script>
+// ==================== i18n ====================
+const I18N = {
+  // ---- 3D Hand Test mode ----
+  'xbox-hint': { en: "Using an Xbox controller? Just connect it to your PC and press any button on it — it's detected automatically, no button needed above.", ar: 'معاك يد Xbox؟ وصّلها بالجهاز ودوس أي زرار فيها - بتتكشف تلقائي، مش محتاج تدوس زرار فوق خالص.' },
+  'recalibrate': { en: '↺ Recalibrate', ar: '↺ إعادة ضبط' },
+  'stage-hint': { en: 'Connect a controller to see it move here', ar: 'وصّل اليد عشان تشوفها بتتحرك هنا' },
+  'stage-hint-ds4': { en: 'DualShock 4 — move your controller to tilt it', ar: 'DualShock 4 — حرّك اليد عشان تميلها' },
+  'stage-hint-dualsense': { en: 'DualSense — move your controller to tilt it', ar: 'DualSense — حرّك اليد عشان تميلها' },
+  'stage-hint-xbox': { en: 'Xbox controller — buttons, sticks & triggers only (no motion sensor)', ar: 'يد Xbox — الأزرار والعصايتين والزناد بس (مفيش حساس حركة)' },
+  'card-buttons': { en: 'Buttons', ar: 'الأزرار' },
+  'card-sticks': { en: 'Sticks', ar: 'العصايتين' },
+  'stick-left': { en: 'Left', ar: 'الشمال' },
+  'stick-right': { en: 'Right', ar: 'اليمين' },
+  'card-triggers': { en: 'Triggers & Rumble', ar: 'الزناد والاهتزاز' },
+  'card-mic': { en: 'Microphone', ar: 'المايك' },
+  'unavailable': { en: 'unavailable', ar: 'مش متاح' },
+  'mic-btn': { en: 'Test Microphone', ar: 'اختبر المايك' },
+  'mic-btn-stop': { en: 'Stop Testing', ar: 'إيقاف الاختبار' },
+  'mic-btn-unavailable': { en: 'Not available on this controller', ar: 'مش متاح في اليد دي' },
+  'legend-title': { en: 'Feature availability by controller:', ar: 'الميزات المتاحة حسب نوع اليد:' },
+  'legend-ds4': { en: 'DS4 (PS4): buttons, sticks, triggers, lightbar, motion sensor — no microphone, no adaptive triggers.', ar: 'DS4 (PS4): الأزرار، العصايتين، الزناد، اللمبة، حساس الحركة — من غير مايك أو زناد تكيفي.' },
+  'legend-dualsense': { en: 'DualSense (PS5): everything DS4 has, plus built-in microphone and adaptive trigger resistance.', ar: 'DualSense (PS5): كل حاجة موجودة في DS4، زائد مايك مدمج ومقاومة تكيفية في الزناد.' },
+  'legend-xbox': { en: "Xbox controller: buttons, sticks, triggers, rumble — no motion sensor, no microphone, no lightbar (the hardware itself doesn't have these).", ar: 'يد Xbox: الأزرار، العصايتين، الزناد، الاهتزاز — من غير حساس حركة أو مايك أو لمبة (الهاردوير نفسه مالوش الحاجات دي أصلاً).' },
+  'eyebrow': { en: '// WebHID · Lightbar Event Simulation', ar: '// WebHID · محاكاة أحداث اللمبة' },
+  'title': { en: 'DS4 Lightbar Event Simulator', ar: 'محاكي أحداث لمبة يد الـ DS4' },
+  'subtitle': { en: "Test how the lightbar reacts to in-game events without opening any game. Connect your controller via USB or Bluetooth, then start from any section below.", ar: 'جرب رد فعل اللمبة على أحداث اللعبة من غير ما تفتح أي لعبة. وصّل اليد بالـ USB أو البلوتوث، وابدأ من أي قسم تحت.' },
+  'seo-intro': { en: "This free browser-based tool lets you test and control the RGB lightbar on a PlayStation DualShock 4 or DualSense controller straight from Chrome or Edge, using the WebHID API — no drivers or downloads needed. Pick any color with a live Steam-style slider, trigger game-accurate lighting effects from GTA V, inFAMOUS: Second Son, Spyro Reignited Trilogy, Killzone: Shadow Fall, and Tomb Raider, or play a small demo game that reacts to your controller's lightbar in real time.", ar: 'أداة مجانية شغالة في المتصفح بتخليك تختبر وتتحكم في لمبة (RGB) يد PlayStation DualShock 4 أو DualSense مباشرة من Chrome أو Edge، باستخدام WebHID API — من غير أي درايفرات أو تحميل. اختار أي لون بسلايدر حي زي إعدادات Steam، شغّل تأثيرات إضاءة حقيقية من GTA V وinFAMOUS: Second Son وSpyro Reignited Trilogy وKillzone: Shadow Fall وTomb Raider، أو العب لعبة تجريبية بسيطة بتتفاعل مع لمبة اليد لحظة بلحظة.' },
+  'nav-lightbar': { en: '🎨 Lightbar Testing', ar: '🎨 اختبار الأضواء' },
+  'nav-3d': { en: '🕹️ 3D Hand Test', ar: '🕹️ تجربة اليد 3D' },
+  'nav-connect': { en: 'Connect', ar: 'الاتصال' },
+  'nav-custom': { en: 'Custom Color', ar: 'لون مخصص' },
+  'nav-events': { en: 'General Events', ar: 'أحداث عامة' },
+  'nav-gtav': { en: 'GTA V', ar: 'GTA V' },
+  'nav-infamous': { en: 'inFAMOUS', ar: 'inFAMOUS' },
+  'nav-spyro': { en: 'Spyro', ar: 'Spyro' },
+  'gtav-wanted-l': { en: 'Wanted Level (Police)', ar: 'مستوى مطلوب (شرطة)' },
+  'gtav-wanted-d': { en: 'Alternating red/blue flash', ar: 'وميض أحمر/أزرق متبادل' },
+  'infamous-title': { en: 'inFAMOUS: Second Son — Karma', ar: 'inFAMOUS: Second Son — الكارما' },
+  'infamous-sub': { en: "The lightbar tracks Delsin's Karma live: neutral white at the start, sliding to blue for Good or red for Evil as you play.", ar: 'اللمبة بتتبع كارما دلسِن لحظيًا: أبيض محايد في البداية، وبتميل للأزرق مع الخير أو الأحمر مع الشر كل ما تلعب.' },
+  'infamous-good-l': { en: 'Good Karma', ar: 'كارما خيّرة' },
+  'infamous-good-d': { en: 'Solid blue', ar: 'أزرق ثابت' },
+  'infamous-evil-l': { en: 'Evil Karma', ar: 'كارما شريرة' },
+  'infamous-evil-d': { en: 'Solid red', ar: 'أحمر ثابت' },
+  'infamous-neutral-l': { en: 'Neutral (Start)', ar: 'محايد (البداية)' },
+  'infamous-neutral-d': { en: 'Off-white', ar: 'أبيض مائل' },
+  'infamous-note': { en: 'Documented behavior: the lightbar shifts from neutral white toward deep blue (Good) or red (Evil) as your Karma meter fills.', ar: 'سلوك موثّق: اللمبة بتتحرك من الأبيض المحايد لأزرق غامق (خير) أو أحمر (شر) كل ما ميزان الكارما بتاعك يتغير.' },
+  'spyro-title': { en: 'Spyro Reignited Trilogy — Sparx Health', ar: 'Spyro Reignited Trilogy — صحة سباركس' },
+  'spyro-sub': { en: "Sparx the dragonfly is Spyro's health meter, and the lightbar mirrors his color on PS4.", ar: 'سباركس اليعسوب هو ميزان صحة سبايرو، واللمبة بتعكس لونه بالظبط على PS4.' },
+  'spyro-full-l': { en: 'Full Health', ar: 'صحة كاملة' },
+  'spyro-full-d': { en: 'Gold / yellow', ar: 'دهبي / أصفر' },
+  'spyro-3-l': { en: 'One Hit Taken', ar: 'اتضرب مرة' },
+  'spyro-3-d': { en: 'Blue', ar: 'أزرق' },
+  'spyro-2-l': { en: 'Two Hits Taken', ar: 'اتضرب مرتين' },
+  'spyro-2-d': { en: 'Green', ar: 'أخضر' },
+  'spyro-critical-l': { en: 'Sparx Gone (Critical)', ar: 'سباركس اختفى (حرج)' },
+  'spyro-critical-d': { en: 'Red — one hit from death', ar: 'أحمر — ضربة واحدة من الموت' },
+  'spyro-note': { en: 'Documented behavior: Sparx (and the lightbar) goes gold → blue → green, then red once Sparx disappears and Spyro is one hit from losing a life.', ar: 'سلوك موثّق: سباركس (واللمبة) بيتدرج دهبي ← أزرق ← أخضر، وبعدين أحمر لما سباركس يختفي ويبقى سبايرو على بعد ضربة واحدة من خسارة حياة.' },
+  'nav-killzone': { en: 'Killzone', ar: 'Killzone' },
+  'killzone-title': { en: 'Killzone: Shadow Fall — Health', ar: 'Killzone: Shadow Fall — الصحة' },
+  'killzone-sub': { en: "One of the very first DS4 lightbar demos — Sony's Shuhei Yoshida showed it live: green fades to red as you take damage, and back to green when healed.", ar: 'من أوائل عروض لمبة DS4 على الإطلاق — شويهي يوشيدا من سوني عرضها لايف بنفسه: الأخضر بيتحول لأحمر وانت بتتضرب، ويرجع أخضر لما تتعالج.' },
+  'killzone-full-l': { en: 'Full Health', ar: 'صحة كاملة' },
+  'killzone-full-d': { en: 'Green', ar: 'أخضر' },
+  'killzone-wounded-l': { en: 'Wounded', ar: 'مصاب' },
+  'killzone-wounded-d': { en: 'Orange (in-between)', ar: 'برتقالي (في النص)' },
+  'killzone-critical-l': { en: 'Critical', ar: 'حرج' },
+  'killzone-critical-d': { en: 'Red — near death', ar: 'أحمر — قريب من الموت' },
+  'killzone-note': { en: "Documented behavior: Sony's own worldwide studios chief demonstrated this live in 2013 — health drops shift the lightbar smoothly from green through orange to red, reversing as you heal.", ar: 'سلوك موثّق: رئيس استوديوهات سوني العالمية بنفسه عرضها لايف سنة 2013 — نزول الصحة بيحرك اللمبة بنعومة من أخضر لبرتقالي لأحمر، والعكس لما تتعالج.' },
+  'nav-tr': { en: 'Tomb Raider', ar: 'Tomb Raider' },
+  'tr-title': { en: "Tomb Raider (Definitive Edition) — Torch", ar: 'Tomb Raider (Definitive Edition) — الشعلة' },
+  'tr-sub': { en: "A fan-favorite detail from launch — the lightbar flickers like real firelight whenever Lara's torch is lit.", ar: 'من أشهر تفاصيل الإطلاق اللي الناس حبتها — اللمبة بترمش زي نار حقيقية أول ما شعلة لارا تتولّع.' },
+  'tr-lit-l': { en: 'Torch Lit', ar: 'الشعلة مولّعة' },
+  'tr-lit-d': { en: 'Flickering fire (yellow/orange)', ar: 'رمش نار (أصفر/برتقالي)' },
+  'tr-off-l': { en: 'Torch Out', ar: 'الشعلة مطفية' },
+  'tr-off-d': { en: 'Back to idle', ar: 'رجوع للوضع الطبيعي' },
+  'tr-note': { en: 'Documented behavior, widely praised at launch: the lightbar mimics flickering firelight to match the torch on screen.', ar: 'سلوك موثّق واتمدح كتير وقت الإطلاق: اللمبة بتحاكي رمش النار عشان تتماشى مع الشعلة على الشاشة.' },
+  'nav-game': { en: 'Demo Game', ar: 'لعبة تجريبية' },
+  'unsupported': { en: "This browser doesn't support WebHID. Open this page in <b>Chrome</b> or <b>Edge</b> on a PC to connect your controller.", ar: 'المتصفح ده مش بيدعم WebHID. افتح الصفحة دي في <b>Chrome</b> أو <b>Edge</b> على الـ PC عشان تقدر توصل اليد.' },
+  'status-default': { en: 'No controller connected yet.', ar: 'مفيش يد متوصلة دلوقتي.' },
+  'connect-btn': { en: 'Connect Controller', ar: 'وصّل اليد' },
+  'connect-btn-done': { en: 'Connected ✓', ar: 'متوصلة ✓' },
+  'status-connected-suffix': { en: 'connected', ar: 'متوصلة' },
+  'status-error': { en: 'Something went wrong while connecting. Make sure the controller shows up in the OS and try again.', ar: 'حصل خطأ أثناء التوصيل. اتأكد إن اليد ظاهرة في نظام التشغيل وجرب تاني.' },
+  'status-send-fail': { en: 'Failed to send data to the controller. Try reconnecting.', ar: 'فشل إرسال البيانات لليد. جرب تعيد التوصيل.' },
+  'events-title': { en: '🎮 General Events', ar: '🎮 أحداث عامة' },
+  'events-sub': { en: 'Ready-made effects you can build any reaction from for any game or script — click and watch the lightbar respond instantly.', ar: 'تأثيرات جاهزة تقدر تستوحي منها أي رد فعل تحطه في أي لعبة أو سكريبت — دوس وشوف اللمبة بتستجيب فورًا.' },
+  'ev-damage-l': { en: 'Take Damage', ar: 'اتضرب' },
+  'ev-damage-d': { en: 'Quick red flash', ar: 'فلاش أحمر سريع' },
+  'ev-lowhealth-l': { en: 'Low Health', ar: 'صحة واطية' },
+  'ev-lowhealth-d': { en: 'Slow, continuous red pulse', ar: 'نبض أحمر بطيء ومستمر' },
+  'ev-speed-l': { en: 'High Speed', ar: 'سرعة عالية' },
+  'ev-speed-d': { en: 'Solid, strong blue', ar: 'أزرق ثابت وقوي' },
+  'ev-win-l': { en: 'Win', ar: 'فوز' },
+  'ev-win-d': { en: 'Celebratory color sequence', ar: 'تتابع ألوان احتفالي' },
+  'ev-lowammo-l': { en: 'Low Ammo', ar: 'ذخيرة قليلة' },
+  'ev-lowammo-d': { en: 'Light orange pulse', ar: 'نبض برتقالي خفيف' },
+  'ev-idle-l': { en: 'Restore Idle', ar: 'استعادة الوضع الطبيعي' },
+  'ev-idle-d': { en: 'Default calm blue', ar: 'اللون الافتراضي (أزرق هادئ)' },
+  'stop-btn-short': { en: 'Stop', ar: 'إيقاف' },
+  'custom-title': { en: '🎨 Custom Color', ar: '🎨 لون مخصص' },
+  'custom-sub': { en: "Same idea as Steam's LED settings — starts at your connected controller's own default blue, then move any slider and the real lightbar changes instantly.", ar: 'نفس فكرة إعدادات Steam بالظبط — بيبدأ باللون الأزرق الافتراضي لليد المتوصلة نفسها، وبعدين حرّك أي سلايدر واللمبة الحقيقية بتتغير فورًا.' },
+  'slider-color': { en: 'Color', ar: 'اللون' },
+  'slider-sat': { en: 'Saturation', ar: 'التشبع' },
+  'slider-bri': { en: 'Brightness', ar: 'السطوع' },
+  'custom-note': { en: 'Try to match the color you see in Steam or any game, then reuse that exact degree anywhere else you need it.', ar: 'جرب تلاقي نفس اللون اللي شايفه في Steam أو أي لعبة، واستخدم الدرجة اللي توصلها في أي حاجة تانية تعملها.' },
+  'ds5-title': { en: '🎮 DualSense (PS5) — Extra Lighting', ar: '🎮 DualSense (PS5) — إضاءة إضافية' },
+  'ds5-sub': { en: "DualSense detected automatically — these controls don't exist on DS4, so they only appear now.", ar: 'تم اكتشاف DualSense تلقائيًا — الخيارات دي مش موجودة على DS4، فبتظهر دلوقتي بس.' },
+  'ds5-player-leds': { en: 'Player Indicator LEDs (below the touchpad)', ar: 'لمبات مؤشر اللاعب (تحت التاتش باد)' },
+  'ds5-mute-led': { en: 'Mic Mute Button LED', ar: 'لمبة زرار كتم المايك' },
+  'ds5-mute-off': { en: 'Off', ar: 'مطفي' },
+  'ds5-mute-on': { en: 'On', ar: 'مضاء' },
+  'ds5-mute-breathing': { en: 'Breathing', ar: 'نبض هادئ' },
+  'gtav-title': { en: 'GTA V — Character Colors', ar: 'GTA V — ألوان الشخصيات' },
+  'gtav-sub': { en: 'The colors the game actually sends to the lightbar on PS4 when switching characters.', ar: 'الألوان الموثقة فعليًا اللي اللعبة بترسلها للمبة على PS4 عند تبديل الشخصية.' },
+  'gtav-michael-l': { en: 'Michael', ar: 'مايكل' },
+  'gtav-solid': { en: 'Solid blue', ar: 'أزرق ثابت' },
+  'gtav-franklin-l': { en: 'Franklin', ar: 'فرانكلين' },
+  'gtav-solid-g': { en: 'Solid green', ar: 'أخضر ثابت' },
+  'gtav-trevor-l': { en: 'Trevor', ar: 'تريفور' },
+  'gtav-solid-o': { en: 'Solid orange', ar: 'برتقالي ثابت' },
+  'gtav-ability-l': { en: 'Special Ability', ar: 'تفعيل القدرة الخاصة' },
+  'gtav-ability-d': { en: "Flashes with the last selected character's color", ar: 'فلاش بلون آخر شخصية مختارة' },
+  'gtav-note': { en: 'These are the actually-documented colors the game sends to the lightbar, based on official confirmations from Rockstar and Sony.', ar: 'دي الألوان الموثقة فعليًا اللي اللعبة بترسلها للمبة، بناءً على تأكيدات رسمية من Rockstar وSony.' },
+  'game-title': { en: '🕹️ Demo Game — Brick Breaker', ar: '🕹️ لعبة تجريبية — تكسير الطوب' },
+  'game-sub': { en: "A simple 2D game to test lightbar reactions to real events while playing: break a brick (quick pulse in the brick's color), miss the ball (red flash + rumble), clear the wall (green celebration), or beat your high score (celebratory color sequence).", ar: 'لعبة 2D بسيطة عشان تجرب تفاعل اللمبة مع أحداث حقيقية أثناء اللعب: تكسر طوبة (نبضة سريعة بلون الطوبة)، تفوّت الكورة (فلاش أحمر + اهتزاز)، تكسر كل الطوب (احتفال أخضر)، أو تكسر رقمك القياسي (تتابع ألوان احتفالي).' },
+  'game-score': { en: 'Score', ar: 'النقاط' },
+  'game-high': { en: 'High Score', ar: 'أعلى نتيجة' },
+  'game-lives': { en: 'Lives', ar: 'الأرواح' },
+  'game-start': { en: 'Start Game', ar: 'ابدأ اللعبة' },
+  'game-playing': { en: 'Playing...', ar: 'بتلعب...' },
+  'game-again': { en: 'Play Again', ar: 'العب تاني' },
+  'game-over-text': { en: 'Game Over', ar: 'انتهت اللعبة' },
+  'game-win-text': { en: 'You Win! 🎉', ar: 'كسبت! 🎉' },
+  'game-paused-text': { en: 'Paused', ar: 'متوقفة مؤقتًا' },
+  'game-resume': { en: 'Resume', ar: 'استمرار' },
+  'game-quit': { en: 'Quit Game', ar: 'الخروج من اللعبة' },
+  'game-paused-hint': { en: 'Up/Down to choose, Enter or ✕ to confirm', ar: 'فوق/تحت للاختيار، Enter أو ✕ للتأكيد' },
+  'game-score-canvas': { en: 'Score', ar: 'النقاط' },
+  'game-note': { en: 'Move the paddle with the arrow keys, A/D, or the connected controller\'s left stick or D-pad — all three work at the same time. Lightbar reactions need the controller connected from the "Connect" section above. The code is plain Canvas API, so it\'s easy to read and modify.', ar: 'حرّك المضرب بالأسهم أو A/D أو بالعصا الشمال/D-pad في اليد المتوصلة — التلاتة شغالين في نفس الوقت. التفاعل مع اللمبة محتاج اليد متوصلة من قسم "الاتصال" فوق. الكود كله بسيط ومكتوب بـ Canvas API عادي عشان تقدر تفهمه وتعدل عليه بسهولة.' },
+};
+
+let currentLang = localStorage.getItem('ds4-lang') || 'en';
+
+function t(key) {
+  return (I18N[key] && I18N[key][currentLang]) || key;
+}
+
+function applyStaticI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (!I18N[key]) return;
+    el.innerHTML = I18N[key][currentLang];
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (!I18N[key]) return;
+    el.title = I18N[key][currentLang];
+  });
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('ds4-lang', lang);
+  const html = document.getElementById('htmlRoot');
+  html.lang = lang;
+  html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+  document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
+  applyStaticI18n();
+  refreshDynamicText();
+}
+
+function refreshDynamicText() {
+  // Reflect current connection / game state in the newly selected language.
+  if (device && device.opened) {
+    const defaultName = deviceKind === 'dualsense' ? 'DualSense' : 'DualShock 4';
+    const platformLabel = deviceKind === 'dualsense' ? 'PS5' : 'PS4';
+    statusText.innerHTML = `<b>${device.productName || defaultName}</b> (${platformLabel}) ${t('status-connected-suffix')}`;
+    connectBtn.textContent = t('connect-btn-done');
+  }
+  if (gState === 'playing') {
+    gameStartBtn.textContent = t('game-playing');
+  } else if (gState === 'over' || gState === 'won') {
+    gameStartBtn.textContent = t('game-again');
+  }
+  if (lastBatteryPercent !== null && lastBatteryMeta) {
+    renderBattery(lastBatteryPercent, lastBatteryMeta);
+  }
+}
+
+document.getElementById('langEnBtn').addEventListener('click', () => {
+  if (currentLang === 'en') return;
+  playUiClick('lang');
+  playLangSwitchAnimation('en', () => setLanguage('en'));
+});
+document.getElementById('langArBtn').addEventListener('click', () => {
+  if (currentLang === 'ar') return;
+  playUiClick('lang');
+  playLangSwitchAnimation('ar', () => setLanguage('ar'));
+});
+
+// ---- Full-screen transition for language switches ----
+// The actual text swap (onOpaque) is deliberately delayed until the overlay
+// has finished fading to fully opaque, so the page never visibly flashes
+// mid-translation — it changes silently behind a solid screen.
+const langAnimOverlay = document.getElementById('langAnimOverlay');
+const langWavePath = document.getElementById('langWavePath');
+let langAnimHideTimer = null;
+let langAnimSwapTimer = null;
+
+function playLangSwitchAnimation(targetLang, onOpaque) {
+  const color = targetLang === 'ar' ? '#22c55e' : '#3b82f6'; // Arabic: green, English: blue
+  langWavePath.style.color = color;
+  langWavePath.style.stroke = color;
+
+  // Reset instantly (no transition) to the "undrawn" state.
+  langWavePath.style.transition = 'none';
+  const len = langWavePath.getTotalLength();
+  langWavePath.style.strokeDasharray = String(len);
+  langWavePath.style.strokeDashoffset = String(len);
+
+  void langAnimOverlay.offsetWidth; // force reflow so the reset above takes effect first
+  langAnimOverlay.classList.add('show');
+
+  requestAnimationFrame(() => {
+    langWavePath.style.transition = 'stroke-dashoffset .6s cubic-bezier(.45,0,.2,1)';
+    langWavePath.style.strokeDashoffset = '0';
+  });
+
+  clearTimeout(langAnimSwapTimer);
+  langAnimSwapTimer = setTimeout(() => {
+    if (onOpaque) onOpaque();
+  }, 190); // just past the .18s opacity transition — screen is fully solid by now
+
+  clearTimeout(langAnimHideTimer);
+  langAnimHideTimer = setTimeout(() => {
+    langAnimOverlay.classList.remove('show');
+  }, 720);
+}
+
+const dot = document.getElementById('dot');
+const statusText = document.getElementById('statusText');
+const modeTag = document.getElementById('modeTag');
+const batteryTag = document.getElementById('batteryTag');
+const connectBtn = document.getElementById('connectBtn');
+const stopBtn = document.getElementById('stopBtn');
+const eventButtons = document.querySelectorAll('.event-btn');
+const unsupportedBox = document.getElementById('unsupported');
+const hueSlider = document.getElementById('hueSlider');
+const satSlider = document.getElementById('satSlider');
+const briSlider = document.getElementById('briSlider');
+const hueVal = document.getElementById('hueVal');
+const satVal = document.getElementById('satVal');
+const briVal = document.getElementById('briVal');
+const customSwatch = document.getElementById('customSwatch');
+const dualSensePanel = document.getElementById('dualSensePanel');
+const playerLedButtons = document.querySelectorAll('.player-led-btn');
+const muteLedButtons = document.querySelectorAll('.mute-led-btn');
+
+// ---- 3D Hand Test mode DOM refs ----
+const modeLightbarBtn = document.getElementById('modeLightbarBtn');
+const mode3dBtn = document.getElementById('mode3dBtn');
+const lightbarModeEl = document.getElementById('lightbarMode');
+const threeDModeEl = document.getElementById('threeDMode');
+const dot3d = document.getElementById('dot3d');
+const statusText3d = document.getElementById('statusText3d');
+const kindTag3d = document.getElementById('kindTag3d');
+const connectBtn3d = document.getElementById('connectBtn3d');
+const connectHud3d = document.getElementById('connectHud3d');
+const xboxHudHint = document.getElementById('xboxHudHint');
+const stageHint = document.getElementById('stageHint');
+const recalBtnOverlay = document.getElementById('recalBtnOverlay');
+const btnGlyphs = document.getElementById('btnGlyphs');
+const stickL = document.getElementById('stickL');
+const stickR = document.getElementById('stickR');
+const l2Fill = document.getElementById('l2Fill');
+const r2Fill = document.getElementById('r2Fill');
+const micBtn = document.getElementById('micBtn');
+const micFill = document.getElementById('micFill');
+const stage3dCanvas = document.getElementById('stage3d');
+
+let device = null;
+let deviceKind = 'ds4'; // 'ds4' or 'dualsense'
+let mode = null; // 'usb' or 'bt'
+let pulseTimer = null;
+let currentGtavColor = [10, 108, 255]; // defaults to Michael's blue
+
+// Both DS4 and DualSense ship with a blue idle/Player-1 lightbar, confirmed across
+// PlayStation support docs and hardware guides — but Sony has never published an
+// exact hex/HSV spec for either, and the two generations of LED hardware aren't
+// guaranteed to render "blue" identically. These are close, reasonable approximations
+// of each controller's out-of-the-box look, not lab-verified factory values.
+const DEFAULT_HSV = {
+  ds4:       { h: 240, s: 100, v: 100 }, // pure blue — matches DS4's classic Player-1 blue
+  dualsense: { h: 232, s: 100, v: 100 }  // very close, slightly more cyan-leaning in practice
+};
+const IDLE_COLOR = [255, 255, 255]; // this tool's own neutral/resting color: white
+
+let currentMuteLed = null;   // null = don't touch, 0/1/2 = off/on/breathing
+let currentPlayerLeds = 0;   // 5-bit mask for the DualSense player-indicator LEDs
+let playerLedsEnabled = false;
+
+if (!('hid' in navigator)) {
+  unsupportedBox.style.display = 'block';
+  connectBtn.disabled = true;
+}
+
+// ---- CRC32 (standard IEEE 802.3, used by the DS4 Bluetooth output report) ----
+const crcTable = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) {
+      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) {
+    crc = crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ---- Report builders: DualShock 4 ----
+function buildDs4UsbReport(r, g, b, flashOn = 0, flashOff = 0, rumbleWeak = 0, rumbleStrong = 0) {
+  const data = new Uint8Array(31);
+  data[0] = 0x07; // enable rumble + LED + LED flash
+  data[3] = rumbleWeak;
+  data[4] = rumbleStrong;
+  data[5] = r;
+  data[6] = g;
+  data[7] = b;
+  data[8] = flashOn;
+  data[9] = flashOff;
+  return { reportId: 0x05, data };
+}
+
+function buildDs4BtReport(r, g, b, flashOn = 0, flashOff = 0, rumbleWeak = 0, rumbleStrong = 0) {
+  const payload = new Uint8Array(78); // excludes the 0x11 report id itself
+  payload[0] = 0xC0; // HID state enabled
+  payload[1] = 0x00; // poll rate (default)
+  payload[2] = 0x07; // enable rumble + LED + LED flash
+  payload[5] = rumbleWeak;
+  payload[6] = rumbleStrong;
+  payload[7] = r;
+  payload[8] = g;
+  payload[9] = b;
+  payload[10] = flashOn;
+  payload[11] = flashOff;
+
+  // CRC32 over [0xA2 (BT output seed), 0x11 (report id), ...payload up to before CRC]
+  const crcInput = new Uint8Array(2 + 74);
+  crcInput[0] = 0xA2;
+  crcInput[1] = 0x11;
+  crcInput.set(payload.subarray(0, 74), 2);
+  const crc = crc32(crcInput);
+
+  payload[74] = crc & 0xFF;
+  payload[75] = (crc >> 8) & 0xFF;
+  payload[76] = (crc >> 16) & 0xFF;
+  payload[77] = (crc >> 24) & 0xFF;
+
+  return { reportId: 0x11, data: payload };
+}
+
+// ---- Report builders: DualSense (PS5) ----
+// Byte offsets confirmed against the Linux kernel's hid-playstation.c
+// (dualsense_output_report_common, 47 bytes) — same structure for USB and BT.
+let dsBtSeq = 0; // rolling 4-bit sequence counter required by the BT output report
+
+function writeDualSenseCommon(buf, offset, opts) {
+  const { r, g, b, rumbleWeak, rumbleStrong, muteLed, playerLeds, playerLedsEnable } = opts;
+
+  let flag0 = 0x00;
+  if (rumbleWeak || rumbleStrong) flag0 |= 0x01 | 0x02; // compatible vibration + haptics select
+  let flag1 = 0x04; // lightbar control enable
+  if (muteLed !== null && muteLed !== undefined) flag1 |= 0x01; // mic mute LED control enable
+  if (playerLedsEnable) flag1 |= 0x10; // player indicator control enable
+
+  buf[offset + 0] = flag0;
+  buf[offset + 1] = flag1;
+  buf[offset + 2] = rumbleWeak;   // motor_right
+  buf[offset + 3] = rumbleStrong; // motor_left
+  // offset+4..7: audio controls, left zeroed
+  buf[offset + 8] = muteLed || 0; // mute_button_led
+  // offset+9: power_save_control, offset+10..37: reserved
+  // offset+38: valid_flag2, offset+39..40: reserved, offset+41: lightbar_setup (left 0 = show color directly, no fade)
+  buf[offset + 42] = 0;                 // led_brightness (0 = bright)
+  buf[offset + 43] = playerLeds || 0;   // player_leds bitmask (bits 0-4)
+  buf[offset + 44] = r;
+  buf[offset + 45] = g;
+  buf[offset + 46] = b;
+}
+
+function buildDualSenseUsbReport(opts) {
+  const data = new Uint8Array(62); // common(47) + reserved(15)
+  writeDualSenseCommon(data, 0, opts);
+  return { reportId: 0x02, data };
+}
+
+function buildDualSenseBtReport(opts) {
+  const payload = new Uint8Array(77); // seq_tag+tag(2) + common(47) + reserved(24) + crc32(4)
+  payload[0] = (dsBtSeq << 4) & 0xF0; // seq_tag: rolling counter in upper nibble
+  dsBtSeq = (dsBtSeq + 1) % 16;
+  payload[1] = 0x10; // tag: fixed magic value required by firmware
+  writeDualSenseCommon(payload, 2, opts);
+
+  // CRC32 over [0xA2 (BT output seed), 0x31 (report id), ...payload up to before CRC]
+  const crcInput = new Uint8Array(2 + 73);
+  crcInput[0] = 0xA2;
+  crcInput[1] = 0x31;
+  crcInput.set(payload.subarray(0, 73), 2);
+  const crc = crc32(crcInput);
+
+  payload[73] = crc & 0xFF;
+  payload[74] = (crc >> 8) & 0xFF;
+  payload[75] = (crc >> 16) & 0xFF;
+  payload[76] = (crc >> 24) & 0xFF;
+
+  return { reportId: 0x31, data: payload };
+}
+
+async function sendLight(r, g, b, flashOn = 0, flashOff = 0, rumbleWeak = 0, rumbleStrong = 0) {
+  if (!device || !device.opened) return;
+  try {
+    let reportId, data;
+    if (deviceKind === 'dualsense') {
+      const opts = { r, g, b, rumbleWeak, rumbleStrong, muteLed: currentMuteLed, playerLeds: currentPlayerLeds, playerLedsEnable: playerLedsEnabled };
+      ({ reportId, data } = mode === 'bt' ? buildDualSenseBtReport(opts) : buildDualSenseUsbReport(opts));
+    } else {
+      ({ reportId, data } = mode === 'bt'
+        ? buildDs4BtReport(r, g, b, flashOn, flashOff, rumbleWeak, rumbleStrong)
+        : buildDs4UsbReport(r, g, b, flashOn, flashOff, rumbleWeak, rumbleStrong));
+    }
+    await device.sendReport(reportId, data);
+  } catch (e) {
+    console.error('sendReport failed', e);
+    statusText.innerHTML = `<b>${t('status-send-fail')}</b>`;
+  }
+}
+
+// Smoothly fades the lightbar from whatever solid color it's currently holding
+// to a new target, instead of snapping instantly — used for "hold this state"
+// events (character/mode colors). Flashing/pulsing effects skip this on purpose.
+let currentColor = [...IDLE_COLOR];
+let colorTransitionRAF = null;
+
+function transitionToColor(r, g, b, duration = 260) {
+  if (colorTransitionRAF) cancelAnimationFrame(colorTransitionRAF);
+  const start = [...currentColor];
+  const target = [r, g, b];
+  const startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const p = Math.min(elapsed / duration, 1);
+    const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; // ease-in-out
+    const cur = [
+      Math.round(start[0] + (target[0] - start[0]) * eased),
+      Math.round(start[1] + (target[1] - start[1]) * eased),
+      Math.round(start[2] + (target[2] - start[2]) * eased)
+    ];
+    sendLight(...cur);
+    currentColor = cur; // keep in sync every step, so an interruption resumes from the true visual color
+    if (p < 1) {
+      colorTransitionRAF = requestAnimationFrame(step);
+    } else {
+      colorTransitionRAF = null;
+    }
+  }
+  colorTransitionRAF = requestAnimationFrame(step);
+}
+
+// Plays once, right after a controller connects: a smooth "hello" sweep through
+// green → yellow → red, settling on white — this tool's own resting/idle color.
+function playConnectSequence(kind) {
+  const seq = [[20, 110, 255], IDLE_COLOR]; // smooth to blue, then settle on white
+  const stepGap = 480;   // ms between the start of each color
+  const fadeTime = 380;  // ms for each individual fade
+  seq.forEach((color, i) => {
+    setTimeout(() => transitionToColor(color[0], color[1], color[2], fadeTime), i * stepGap);
+  });
+  playWelcomeChime(kind);
+}
+
+// A soft, original "welcome" chime played once on connect — not a reproduction
+// A short, clean blip for moving focus between page elements via the gamepad —
+// simple and modern, in the spirit of console UI navigation sounds.
+function playNavBlip() {
+  tone(780, 0.055, 'sine', 0.13);
+  tone(1040, 0.045, 'sine', 0.05, 0.02);
+}
+
+// General UI click sounds for buttons outside the effect system — each
+// functional category gets its own distinct character, mouse or gamepad alike.
+function playUiClick(category) {
+  switch (category) {
+    case 'connect':
+      tone(520, 0.12, 'sine', 0.17, 0);
+      tone(780, 0.18, 'sine', 0.15, 0.09);
+      break;
+    case 'lang':
+      tone(700, 0.05, 'triangle', 0.15, 0);
+      tone(500, 0.05, 'triangle', 0.13, 0.06);
+      break;
+    case 'game-start':
+      sweep(300, 720, 0.22, 'sine', 0.2);
+      break;
+    case 'stop':
+      sweep(500, 200, 0.18, 'sine', 0.18);
+      break;
+    case 'toggle':
+      tone(600, 0.045, 'square', 0.11);
+      break;
+    default:
+      tone(600, 0.05, 'sine', 0.12);
+  }
+}
+
+// of Sony's own PS4/PS5 startup sound (that's copyrighted), just a gentle tone
+// of similar spirit, with a slightly different character per controller generation.
+function playWelcomeChime(kind) {
+  if (kind === 'dualsense') {
+    tone(392.00, 0.5, 'sine', 0.18, 0);      // G4
+    tone(587.33, 0.55, 'sine', 0.17, 0.12);  // D5
+    tone(783.99, 0.7, 'sine', 0.15, 0.26);   // G5
+    tone(587.33, 0.4, 'triangle', 0.08, 0.3);// soft shimmer layer
+  } else {
+    tone(440.00, 0.55, 'sine', 0.18, 0);     // A4
+    tone(659.25, 0.6, 'sine', 0.16, 0.15);   // E5
+    tone(880.00, 0.55, 'sine', 0.13, 0.3);   // A5
+  }
+}
+
+// ---- Cinematic panel borders: each panel's border glows to match whatever
+// color it last sent to the lightbar, updating the moment you click something.
+const GLOW_PANELS = ['events', 'gtav', 'infamous', 'spyro', 'killzone', 'tombraider', 'game'];
+
+// Grades a raw RGB value toward a moodier, more "cinematic" look for the panel
+// glow — real film/TV lighting rarely uses flat, fully-saturated primaries.
+// This pulls saturation down a bit and deepens brightness slightly, while
+// keeping the color clearly recognizable as the same hue.
+function cinematicGrade(r, g, b) {
+  let rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const v = max;
+  const d = max - min;
+  const s = max === 0 ? 0 : d / max;
+  let h = 0;
+  if (d !== 0) {
+    if (max === rn) h = ((gn - bn) / d) % 6;
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const gradedS = Math.min(100, s * 78);
+  const gradedV = Math.min(100, v * 82 + 6);
+  return hsvToRgb(h, gradedS, gradedV);
+}
+
+function setPanelGlow(panelId, r, g, b) {
+  // Only one panel stays lit at a time — triggering a new effect switches the glow over.
+  GLOW_PANELS.forEach(id => {
+    if (id === panelId) return;
+    const other = document.getElementById(id);
+    if (other) { other.style.borderColor = ''; other.style.boxShadow = ''; }
+  });
+
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const [gr, gg, gb] = cinematicGrade(r, g, b);
+  panel.style.borderColor = `rgb(${gr},${gg},${gb})`;
+  panel.style.boxShadow = `0 0 0 1px rgba(${gr},${gg},${gb},.28), 0 10px 28px rgba(${gr},${gg},${gb},.18)`;
+}
+
+function resetAllPanelGlows() {
+  GLOW_PANELS.forEach(id => {
+    const panel = document.getElementById(id);
+    if (!panel) return;
+    panel.style.borderColor = '';
+    panel.style.boxShadow = '';
+  });
+}
+
+function detectKind(dev) {
+  return (dev.productId === 0x0CE6 || dev.productId === 0x0DF2) ? 'dualsense' : 'ds4';
+}
+
+function detectMode(dev, kind) {
+  const usbReportId = kind === 'dualsense' ? 0x02 : 0x05;
+  for (const col of dev.collections) {
+    for (const out of (col.outputReports || [])) {
+      if (out.reportId === usbReportId) return 'usb';
+    }
+  }
+  return 'bt'; // no USB-only output report found → assume Bluetooth framing
+}
+
+async function connectToController() {
+  playUiClick('connect');
+  try {
+    const devices = await navigator.hid.requestDevice({
+      filters: [
+        { vendorId: 0x054C, productId: 0x05C4 }, // DS4 v1
+        { vendorId: 0x054C, productId: 0x09CC }, // DS4 v2
+        { vendorId: 0x054C, productId: 0x0CE6 }, // DualSense
+        { vendorId: 0x054C, productId: 0x0DF2 }  // DualSense Edge
+      ]
+    });
+    if (!devices.length) return;
+
+    device = devices[0];
+    if (!device.opened) await device.open();
+
+    deviceKind = detectKind(device);
+    mode = detectMode(device, deviceKind);
+    dsBtSeq = 0;
+    lastBatteryPercent = null;
+    lastBatteryMeta = null;
+    currentColor = [...IDLE_COLOR];
+
+    dot.className = 'dot on';
+    const defaultName = deviceKind === 'dualsense' ? 'DualSense' : 'DualShock 4';
+    const platformLabel = deviceKind === 'dualsense' ? 'PS5' : 'PS4';
+    statusText.innerHTML = `<b>${device.productName || defaultName}</b> (${platformLabel}) ${t('status-connected-suffix')}`;
+    modeTag.style.display = 'inline-block';
+    const kindLabel = deviceKind === 'dualsense' ? 'DUALSENSE' : 'DS4';
+    const transportLabel = mode === 'bt'
+      ? (deviceKind === 'dualsense' ? 'BLUETOOTH · report 0x31' : 'BLUETOOTH · report 0x11')
+      : (deviceKind === 'dualsense' ? 'USB · report 0x02' : 'USB · report 0x05');
+    modeTag.textContent = `${kindLabel} · ${transportLabel}`;
+    modeTag.className = 'mode-tag ' + mode;
+
+    eventButtons.forEach(b => b.disabled = false);
+    stopBtn.disabled = false;
+    gameStartBtn.disabled = false;
+    [hueSlider, satSlider, briSlider].forEach(s => s.disabled = false);
+    connectBtn.textContent = t('connect-btn-done');
+    connectBtn.disabled = true;
+
+    dualSensePanel.style.display = deviceKind === 'dualsense' ? 'block' : 'none';
+    if (deviceKind === 'dualsense') {
+      playerLedButtons.forEach(b => b.disabled = false);
+      muteLedButtons.forEach(b => b.disabled = false);
+    }
+
+    device.removeEventListener('inputreport', handleInputReport);
+    device.addEventListener('inputreport', handleInputReport);
+
+    // DualSense over Bluetooth defaults to a truncated input report that omits
+    // battery data until calibration info (feature report 0x05) is requested once.
+    if (deviceKind === 'dualsense' && mode === 'bt') {
+      try { await device.receiveFeatureReport(0x05); } catch (e) { /* best-effort */ }
+    }
+
+    const defaultHsv = DEFAULT_HSV[deviceKind];
+    hueSlider.value = defaultHsv.h;
+    satSlider.value = defaultHsv.s;
+    briSlider.value = defaultHsv.v;
+    updateCustomColor(false); // sync the slider display only — the hardware follows the connect sequence below
+
+    playConnectSequence(deviceKind);
+
+    // ---- Mirror the same connected state into the 3D Hand Test HUD ----
+    dot3d.className = 'dot on';
+    statusText3d.innerHTML = `<b>${device.productName || defaultName}</b> (${platformLabel}) ${t('status-connected-suffix')}`;
+    kindTag3d.style.display = 'inline-block';
+    kindTag3d.textContent = `${kindLabel} · ${transportLabel}`;
+    kindTag3d.className = 'mode-tag ' + mode;
+    connectBtn3d.textContent = t('connect-btn-done');
+    connectBtn3d.disabled = true;
+    connectHud3d.classList.add('connected');
+    xboxHudHint.style.display = 'none';
+    recalBtnOverlay.disabled = false;
+    micAvailable = (deviceKind === 'dualsense');
+    if (typeof loadModelFor === 'function') loadModelFor(deviceKind);
+    if (typeof updateFeatureAvailability3d === 'function') updateFeatureAvailability3d();
+
+  } catch (e) {
+    console.error(e);
+    dot.className = 'dot err';
+    statusText.textContent = t('status-error');
+    dot3d.className = 'dot err';
+    statusText3d.textContent = t('status-error');
+  }
+}
+
+connectBtn.addEventListener('click', connectToController);
+connectBtn3d.addEventListener('click', connectToController);
+
+// ---- Battery parsing (from input reports) ----
+// Note: DS4/DualSense firmware itself only reports battery in a 4-bit nibble,
+// i.e. ~10%-wide steps (0,10,20…100). That's a hardware/protocol ceiling —
+// the real value jumps in these steps because that's genuinely all the
+// controller ever reports, so we just display it directly as it arrives.
+let lastBatteryPercent = null;
+
+function parseBatteryDs4(byte) {
+  const cableConnected = (byte >> 4) & 0x01;
+  let level = byte & 0x0F;
+  let charging;
+  if (!cableConnected || level > 10) {
+    charging = false;
+  } else {
+    charging = true;
+  }
+  if (!cableConnected) level += 1;
+  if (level > 10) level = 10;
+  return { percent: level * 10, charging, full: cableConnected && !charging };
+}
+
+function parseBatteryDualSense(byte) {
+  const level = byte & 0x0F;
+  const chargingStatus = (byte >> 4) & 0x0F;
+  switch (chargingStatus) {
+    case 0x1: return { percent: Math.min(level * 10 + 5, 100), charging: true, full: false };
+    case 0x2: return { percent: 100, charging: false, full: true };
+    case 0xa: case 0xb: case 0xf: return { percent: null, charging: false, full: false };
+    default: return { percent: Math.min(level * 10 + 5, 100), charging: false, full: false };
+  }
+}
+
+let lastBatteryMeta = null;
+const batteryFillRect = document.getElementById('batteryFillRect');
+const batteryBoltPath = document.getElementById('batteryBoltPath');
+const batteryPercentText = document.getElementById('batteryPercentText');
+
+function renderBattery(percent, meta) {
+  lastBatteryMeta = meta;
+
+  const maxFillWidth = 15; // interior of the battery outline, in SVG units
+  const fillWidth = percent <= 0 ? 0 : Math.max(1, Math.round((percent / 100) * maxFillWidth));
+  batteryFillRect.setAttribute('width', String(fillWidth));
+
+  let fillColor = '#e8ecf5'; // neutral/default, matches body text color
+  if (meta.charging || meta.full) {
+    fillColor = '#22c55e'; // green, like a phone charging/topped-up
+  } else if (percent < 15) {
+    fillColor = '#ef4444'; // red, low battery warning
+  }
+  batteryFillRect.setAttribute('fill', fillColor);
+  batteryBoltPath.style.display = meta.charging ? 'block' : 'none';
+
+  batteryPercentText.textContent = `${percent}%`;
+  batteryTag.style.display = 'inline-flex';
+}
+
+function readI16LE(data, offset) {
+  return data.getInt16(offset, true);
+}
+
+function parseDs4Full(data, isBt) {
+  const off = isBt ? 2 : 0; // verified against this file's own DS4 battery offsets (29 USB → 31 BT)
+  const lx = data.getUint8(off + 0), ly = data.getUint8(off + 1);
+  const rx = data.getUint8(off + 2), ry = data.getUint8(off + 3);
+  const l2 = data.getUint8(off + 4), r2 = data.getUint8(off + 5);
+  const b5 = data.getUint8(off + 6); // dpad (low nibble) + Square/Cross/Circle/Triangle (high nibble)
+  const b6 = data.getUint8(off + 7); // L1/R1/L2/R2/Share/Options/L3/R3
+  const dpadVal = b5 & 0x0F;
+  const gx = readI16LE(data, off + 12), gy = readI16LE(data, off + 14), gz = readI16LE(data, off + 16);
+  const ax = readI16LE(data, off + 18), ay = readI16LE(data, off + 20), az = readI16LE(data, off + 22);
+  return {
+    stickLX: (lx - 128) / 128, stickLY: (ly - 128) / 128,
+    stickRX: (rx - 128) / 128, stickRY: (ry - 128) / 128,
+    l2: l2 / 255, r2: r2 / 255,
+    buttons: {
+      square: !!(b5 & 0x10), cross: !!(b5 & 0x20), circle: !!(b5 & 0x40), triangle: !!(b5 & 0x80),
+      l1: !!(b6 & 0x01), r1: !!(b6 & 0x02),
+      dpadUp: dpadVal === 0 || dpadVal === 1 || dpadVal === 7,
+      dpadRight: dpadVal === 1 || dpadVal === 2 || dpadVal === 3,
+      dpadDown: dpadVal === 3 || dpadVal === 4 || dpadVal === 5,
+      dpadLeft: dpadVal === 5 || dpadVal === 6 || dpadVal === 7,
+    },
+    gyro: { x: gx, y: gy, z: gz }, accel: { x: ax, y: ay, z: az },
+  };
+}
+
+function parseDualSenseFull(data, isBt) {
+  const off = isBt ? 1 : 0; // verified against this file's own DualSense battery offsets (52 USB → 53 BT) — a 1-byte shift, NOT 2 like DS4
+  const lx = data.getUint8(off + 0), ly = data.getUint8(off + 1);
+  const rx = data.getUint8(off + 2), ry = data.getUint8(off + 3);
+  const l2 = data.getUint8(off + 4), r2 = data.getUint8(off + 5);
+  const b7 = data.getUint8(off + 7); // dpad (low nibble) + Square/Cross/Circle/Triangle (high nibble)
+  const b8 = data.getUint8(off + 8); // L1/R1/L2/R2/Create/Options/L3/R3
+  const dpadVal = b7 & 0x0F;
+  const gx = readI16LE(data, off + 12), gy = readI16LE(data, off + 14), gz = readI16LE(data, off + 16);
+  const ax = readI16LE(data, off + 18), ay = readI16LE(data, off + 20), az = readI16LE(data, off + 22);
+  return {
+    stickLX: (lx - 128) / 128, stickLY: (ly - 128) / 128,
+    stickRX: (rx - 128) / 128, stickRY: (ry - 128) / 128,
+    l2: l2 / 255, r2: r2 / 255,
+    buttons: {
+      square: !!(b7 & 0x10), cross: !!(b7 & 0x20), circle: !!(b7 & 0x40), triangle: !!(b7 & 0x80),
+      l1: !!(b8 & 0x01), r1: !!(b8 & 0x02),
+      dpadUp: dpadVal === 0 || dpadVal === 1 || dpadVal === 7,
+      dpadRight: dpadVal === 1 || dpadVal === 2 || dpadVal === 3,
+      dpadDown: dpadVal === 3 || dpadVal === 4 || dpadVal === 5,
+      dpadLeft: dpadVal === 5 || dpadVal === 6 || dpadVal === 7,
+    },
+    gyro: { x: gx, y: gy, z: gz }, accel: { x: ax, y: ay, z: az },
+  };
+}
+
+// Shared live input state for the 3D Hand Test's HUD + model, updated on
+// every input report regardless of which mode is currently visible (cheap
+// to keep current; the 3D render loop is what's actually gated by visibility).
+const inputState3d = {
+  buttons: {}, stickLX: 0, stickLY: 0, stickRX: 0, stickRY: 0, l2: 0, r2: 0,
+};
+
+function handleInputReport(event) {
+  const { data, reportId } = event;
+  let status = null;
+  let full = null;
+
+  if (deviceKind === 'dualsense') {
+    if (reportId === 0x01 && data.byteLength > 52) { status = parseBatteryDualSense(data.getUint8(52)); if (data.byteLength > 40) full = parseDualSenseFull(data, false); }
+    else if (reportId === 0x31 && data.byteLength > 53) { status = parseBatteryDualSense(data.getUint8(53)); if (data.byteLength > 41) full = parseDualSenseFull(data, true); }
+  } else {
+    if (reportId === 0x01 && data.byteLength > 29) { status = parseBatteryDs4(data.getUint8(29)); if (data.byteLength > 30) full = parseDs4Full(data, false); }
+    else if (reportId === 0x11 && data.byteLength > 31) { status = parseBatteryDs4(data.getUint8(31)); if (data.byteLength > 32) full = parseDs4Full(data, true); }
+  }
+
+  if (status && status.percent !== null && status.percent !== lastBatteryPercent) {
+    lastBatteryPercent = status.percent;
+    renderBattery(status.percent, status);
+  }
+
+  if (full) {
+    inputState3d.stickLX = full.stickLX; inputState3d.stickLY = full.stickLY;
+    inputState3d.stickRX = full.stickRX; inputState3d.stickRY = full.stickRY;
+    inputState3d.l2 = full.l2; inputState3d.r2 = full.r2;
+    inputState3d.buttons = full.buttons;
+    if (typeof applyMotion3d === 'function') applyMotion3d(full.gyro, full.accel);
+    if (typeof handleTriggerRumble3d === 'function') handleTriggerRumble3d(full.l2, full.r2);
+  }
+}
+
+// ---- DualSense-only extra lighting controls ----
+playerLedButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    playUiClick('toggle');
+    const bit = Number(btn.dataset.led);
+    currentPlayerLeds ^= (1 << bit);
+    playerLedsEnabled = true;
+    btn.classList.toggle('active', (currentPlayerLeds & (1 << bit)) !== 0);
+    sendLight(...currentGtavColorOrCustom());
+  });
+});
+
+muteLedButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    playUiClick('toggle');
+    currentMuteLed = Number(btn.dataset.mute);
+    muteLedButtons.forEach(b => b.classList.toggle('active', b === btn));
+    sendLight(...currentGtavColorOrCustom());
+  });
+});
+
+// Re-sends whatever color is currently showing so a player-LED/mute-LED change
+// takes effect immediately without altering the lightbar color itself.
+function currentGtavColorOrCustom() {
+  const h = Number(hueSlider.value), s = Number(satSlider.value), v = Number(briSlider.value);
+  return hsvToRgb(h, s, v);
+}
+
+function stopPulse() {
+  if (pulseTimer) {
+    clearInterval(pulseTimer);
+    pulseTimer = null;
+  }
+}
+
+stopBtn.addEventListener('click', () => {
+  playUiClick('stop');
+  stopPulse();
+  transitionToColor(...IDLE_COLOR);
+  resetAllPanelGlows();
+});
+
+function hsvToRgb(h, s, v) {
+  s /= 100; v /= 100;
+  const c = v * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60)       { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else              { r = c; g = 0; b = x; }
+  return [
+    Math.round((r + m) * 255),
+    Math.round((g + m) * 255),
+    Math.round((b + m) * 255)
+  ];
+}
+
+let customSendPending = false;
+
+function updateCustomColor(sendToHardware = true) {
+  const h = Number(hueSlider.value);
+  const s = Number(satSlider.value);
+  const v = Number(briSlider.value);
+
+  hueVal.textContent = h + '°';
+  satVal.textContent = s + '%';
+  briVal.textContent = v + '%';
+
+  const [r, g, b] = hsvToRgb(h, s, v);
+  customSwatch.style.background = `rgb(${r},${g},${b})`;
+  customSwatch.style.boxShadow = `0 0 24px rgba(${r},${g},${b},.45)`;
+
+  if (!sendToHardware) return;
+  if (customSendPending) return;
+  customSendPending = true;
+  requestAnimationFrame(() => {
+    stopPulse();
+    sendLight(r, g, b);
+    customSendPending = false;
+  });
+}
+
+[hueSlider, satSlider, briSlider].forEach(s => s.addEventListener('input', updateCustomColor));
+
+// ==================== Sound engine (synthesized — no external audio files) ====================
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function tone(freq, duration, type = 'sine', gain = 0.3, delay = 0) {
+  const ctx = getAudioCtx();
+  const t0 = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(Math.max(gain, 0.0001), t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0 + duration + 0.03);
+}
+
+function sweep(freqStart, freqEnd, duration, type = 'sine', gain = 0.3, delay = 0) {
+  const ctx = getAudioCtx();
+  const t0 = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freqStart, t0);
+  osc.frequency.linearRampToValueAtTime(freqEnd, t0 + duration);
+  g.gain.setValueAtTime(Math.max(gain, 0.0001), t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0 + duration + 0.03);
+}
+
+function noiseBurst(duration, gain = 0.2, delay = 0) {
+  const ctx = getAudioCtx();
+  const t0 = ctx.currentTime + delay;
+  const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / size);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(gain, t0);
+  src.connect(g); g.connect(ctx.destination);
+  src.start(t0);
+}
+
+// ---- Per-panel volume (persisted) ----
+const SOUND_PANELS = ['events', 'gtav', 'infamous', 'spyro', 'killzone', 'tombraider', 'game'];
+const panelVolumes = {};
+
+function loadPanelVolumes() {
+  SOUND_PANELS.forEach(key => {
+    const stored = localStorage.getItem('ds4-vol-' + key);
+    panelVolumes[key] = stored !== null ? Number(stored) : 50; // default: half, not too loud
+  });
+}
+
+function setPanelVolume(key, value) {
+  panelVolumes[key] = value;
+  localStorage.setItem('ds4-vol-' + key, String(value));
+}
+
+function initVolumeSliders() {
+  document.querySelectorAll('.vol-slider').forEach(slider => {
+    const key = slider.dataset.panel;
+    slider.value = panelVolumes[key] ?? 50;
+    slider.addEventListener('input', () => setPanelVolume(key, Number(slider.value)));
+  });
+}
+
+// ---- Effect dispatcher ----
+function playSound(name, panelKey = 'events') {
+  const vol = (panelVolumes[panelKey] ?? 50) / 100;
+  if (vol <= 0) return;
+  try {
+    switch (name) {
+      case 'damage':       tone(170, 0.16, 'sawtooth', 0.35 * vol); break;
+      case 'lowhealth':    tone(240, 0.14, 'sine', 0.22 * vol); break;
+      case 'speed':        sweep(280, 900, 0.35, 'sine', 0.28 * vol); break;
+      case 'win':          [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, 'triangle', 0.28 * vol, i * 0.12)); break;
+      case 'lowammo':      tone(880, 0.07, 'square', 0.14 * vol); break;
+      case 'idle':         tone(440, 0.07, 'sine', 0.12 * vol); break;
+      case 'switch':       tone(660, 0.09, 'triangle', 0.22 * vol); break;
+      case 'ability':      sweep(400, 1200, 0.22, 'square', 0.22 * vol); break;
+      case 'police':       sweep(500, 850, 0.28, 'sine', 0.28 * vol, 0); sweep(850, 500, 0.28, 'sine', 0.28 * vol, 0.28); break;
+      case 'karma-good':   tone(700, 0.2, 'sine', 0.24 * vol); break;
+      case 'karma-evil':   tone(150, 0.24, 'sawtooth', 0.28 * vol); break;
+      case 'karma-neutral':tone(440, 0.14, 'sine', 0.18 * vol); break;
+      case 'health-good':  tone(600, 0.14, 'sine', 0.2 * vol); break;
+      case 'health-mid':   tone(340, 0.14, 'triangle', 0.22 * vol); break;
+      case 'health-crit':  tone(170, 0.28, 'sawtooth', 0.28 * vol); break;
+      case 'torch':        noiseBurst(0.14, 0.16 * vol); tone(300, 0.1, 'sine', 0.1 * vol, 0.02); break;
+      case 'torch-off':    tone(180, 0.1, 'sine', 0.14 * vol); break;
+      case 'brick':        tone(520, 0.06, 'square', 0.18 * vol); break;
+      case 'lifelost':     tone(150, 0.22, 'sawtooth', 0.28 * vol); break;
+      case 'gameover':     sweep(400, 100, 0.4, 'sawtooth', 0.28 * vol); break;
+      case 'gamewin':      [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.16, 'triangle', 0.26 * vol, i * 0.1)); break;
+      default:             tone(440, 0.1, 'sine', 0.2 * vol);
+    }
+  } catch (e) { console.error('sound error', e); }
+}
+
+eventButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    stopPulse();
+    const ev = btn.dataset.event;
+
+    switch (ev) {
+      case 'damage':
+        sendLight(255, 0, 0, 3, 3);
+        playSound('damage', 'events');
+        setPanelGlow('events', 255, 0, 0);
+        break;
+
+      case 'lowhealth': {
+        let on = true;
+        sendLight(200, 0, 0);
+        playSound('lowhealth', 'events');
+        setPanelGlow('events', 200, 0, 0);
+        pulseTimer = setInterval(() => {
+          on = !on;
+          sendLight(on ? 200 : 40, 0, 0);
+          setPanelGlow('events', on ? 200 : 40, 0, 0);
+          if (on) playSound('lowhealth', 'events');
+        }, 500);
+        break;
+      }
+
+      case 'speed':
+        transitionToColor(0, 90, 255);
+        playSound('speed', 'events');
+        setPanelGlow('events', 0, 90, 255);
+        break;
+
+      case 'win': {
+        const seq = [[255,215,0],[0,255,120],[0,150,255],[255,215,0]];
+        const notes = [523, 659, 784, 1047];
+        let i = 0;
+        sendLight(...seq[0]);
+        playSound('win', 'events');
+        setPanelGlow('events', ...seq[0]);
+        pulseTimer = setInterval(() => {
+          i = (i + 1) % seq.length;
+          sendLight(...seq[i]);
+          setPanelGlow('events', ...seq[i]);
+          tone(notes[i], 0.16, 'triangle', 0.24 * ((panelVolumes['events'] ?? 50) / 100));
+        }, 350);
+        break;
+      }
+
+      case 'lowammo': {
+        let on = true;
+        sendLight(200, 120, 0);
+        playSound('lowammo', 'events');
+        setPanelGlow('events', 200, 120, 0);
+        pulseTimer = setInterval(() => {
+          on = !on;
+          sendLight(on ? 200 : 60, on ? 120 : 30, 0);
+          setPanelGlow('events', on ? 200 : 60, on ? 120 : 30, 0);
+          if (on) playSound('lowammo', 'events');
+        }, 700);
+        break;
+      }
+
+      case 'idle':
+        transitionToColor(...IDLE_COLOR);
+        playSound('idle', 'events');
+        setPanelGlow('events', ...IDLE_COLOR);
+        break;
+
+      case 'gtav-michael':
+        currentGtavColor = [10, 108, 255];
+        transitionToColor(...currentGtavColor);
+        playSound('switch', 'gtav');
+        setPanelGlow('gtav', ...currentGtavColor);
+        break;
+
+      case 'gtav-franklin':
+        currentGtavColor = [34, 197, 94];
+        transitionToColor(...currentGtavColor);
+        playSound('switch', 'gtav');
+        setPanelGlow('gtav', ...currentGtavColor);
+        break;
+
+      case 'gtav-trevor':
+        currentGtavColor = [255, 122, 0];
+        transitionToColor(...currentGtavColor);
+        playSound('switch', 'gtav');
+        setPanelGlow('gtav', ...currentGtavColor);
+        break;
+
+      case 'gtav-ability': {
+        const [r, g, b] = currentGtavColor;
+        let on = true;
+        sendLight(255, 255, 255);
+        playSound('ability', 'gtav');
+        setPanelGlow('gtav', 255, 255, 255);
+        pulseTimer = setInterval(() => {
+          on = !on;
+          sendLight(...(on ? [255, 255, 255] : [r, g, b]));
+          setPanelGlow('gtav', ...(on ? [255, 255, 255] : [r, g, b]));
+          if (on) tone(900, 0.08, 'square', 0.16 * ((panelVolumes['gtav'] ?? 50) / 100));
+        }, 180);
+        break;
+      }
+
+      case 'gtav-wanted': {
+        let on = true;
+        sendLight(255, 0, 0);
+        setPanelGlow('gtav', 255, 0, 0);
+        const gtavVol = () => (panelVolumes['gtav'] ?? 50) / 100;
+        sweep(650, 900, 0.26, 'sine', 0.26 * gtavVol());
+        pulseTimer = setInterval(() => {
+          on = !on;
+          sendLight(...(on ? [255, 0, 0] : [0, 90, 255]));
+          setPanelGlow('gtav', ...(on ? [255, 0, 0] : [0, 90, 255]));
+          sweep(on ? 650 : 900, on ? 900 : 650, 0.26, 'sine', 0.26 * gtavVol());
+        }, 280);
+        break;
+      }
+
+      case 'infamous-good':
+        transitionToColor(20, 110, 255);
+        playSound('karma-good', 'infamous');
+        setPanelGlow('infamous', 20, 110, 255);
+        break;
+
+      case 'infamous-evil':
+        transitionToColor(220, 20, 30);
+        playSound('karma-evil', 'infamous');
+        setPanelGlow('infamous', 220, 20, 30);
+        break;
+
+      case 'infamous-neutral':
+        transitionToColor(235, 235, 235);
+        playSound('karma-neutral', 'infamous');
+        setPanelGlow('infamous', 235, 235, 235);
+        break;
+
+      case 'spyro-full':
+        transitionToColor(255, 200, 0);
+        playSound('health-good', 'spyro');
+        setPanelGlow('spyro', 255, 200, 0);
+        break;
+
+      case 'spyro-3':
+        transitionToColor(30, 110, 255);
+        playSound('health-good', 'spyro');
+        setPanelGlow('spyro', 30, 110, 255);
+        break;
+
+      case 'spyro-2':
+        transitionToColor(50, 200, 90);
+        playSound('health-mid', 'spyro');
+        setPanelGlow('spyro', 50, 200, 90);
+        break;
+
+      case 'spyro-critical':
+        transitionToColor(230, 20, 20);
+        playSound('health-crit', 'spyro');
+        setPanelGlow('spyro', 230, 20, 20);
+        break;
+
+      case 'killzone-full':
+        transitionToColor(40, 200, 80);
+        playSound('health-good', 'killzone');
+        setPanelGlow('killzone', 40, 200, 80);
+        break;
+
+      case 'killzone-wounded':
+        transitionToColor(255, 140, 0);
+        playSound('health-mid', 'killzone');
+        setPanelGlow('killzone', 255, 140, 0);
+        break;
+
+      case 'killzone-critical':
+        transitionToColor(220, 30, 30);
+        playSound('health-crit', 'killzone');
+        setPanelGlow('killzone', 220, 30, 30);
+        break;
+
+      case 'tombraider-lit': {
+        let flick = 0;
+        sendLight(255, 140, 0);
+        playSound('torch', 'tombraider');
+        setPanelGlow('tombraider', 255, 140, 0);
+        pulseTimer = setInterval(() => {
+          const tones = [[255,140,0],[255,170,40],[255,110,0],[255,190,60]];
+          flick = (flick + 1) % tones.length;
+          sendLight(...tones[flick]);
+          setPanelGlow('tombraider', ...tones[flick]);
+          if (Math.random() > 0.35) playSound('torch', 'tombraider');
+        }, 110);
+        break;
+      }
+
+      case 'tombraider-off':
+        transitionToColor(...IDLE_COLOR);
+        playSound('torch-off', 'tombraider');
+        setPanelGlow('tombraider', ...IDLE_COLOR);
+        break;
+    }
+  });
+});
+
+// ==================== Brick Breaker mini-game ====================
+const gameCanvas = document.getElementById('gameCanvas');
+const gameStage = document.getElementById('gameStage');
+const ctx = gameCanvas.getContext('2d');
+const gameScoreEl = document.getElementById('gameScore');
+const gameHighEl = document.getElementById('gameHigh');
+const gameLivesEl = document.getElementById('gameLives');
+const gameStartBtn = document.getElementById('gameStartBtn');
+
+const GW = gameCanvas.width, GH = gameCanvas.height;
+let gState = 'idle'; // idle | playing | over | won
+let gamePaused = false;
+let pauseMenuIndex = 0; // 0 = Resume, 1 = Quit
+let paddle = { x: GW / 2 - 40, y: GH - 24, w: 80, h: 10, speed: 7 };
+let ball = { x: GW / 2, y: GH - 40, r: 6, vx: 3.2, vy: -3.6 };
+let bricks = [];
+let keys = {};
+let score = 0;
+let lives = 3;
+let highScore = Number(localStorage.getItem('ds4breaker-highscore') || 0);
+
+const BRICK_ROWS = 4, BRICK_COLS = 8, BRICK_W = 66, BRICK_H = 16, BRICK_GAP = 4, BRICK_TOP = 36;
+const ROW_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6'];
+let brickFeedbackTimer = null;
+
+gameHighEl.textContent = highScore;
+
+window.addEventListener('keydown', e => {
+  if (['ArrowLeft', 'ArrowRight', 'a', 'd', 'A', 'D'].includes(e.key)) e.preventDefault();
+  keys[e.key] = true;
+});
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+function buildBricks() {
+  bricks = [];
+  const totalWidth = BRICK_COLS * (BRICK_W + BRICK_GAP) - BRICK_GAP;
+  const startX = (GW - totalWidth) / 2;
+  for (let row = 0; row < BRICK_ROWS; row++) {
+    for (let col = 0; col < BRICK_COLS; col++) {
+      bricks.push({
+        x: startX + col * (BRICK_W + BRICK_GAP),
+        y: BRICK_TOP + row * (BRICK_H + BRICK_GAP),
+        w: BRICK_W, h: BRICK_H,
+        color: ROW_COLORS[row],
+        alive: true
+      });
+    }
+  }
+}
+
+function resetBall() {
+  ball.x = paddle.x + paddle.w / 2;
+  ball.y = paddle.y - 10;
+  ball.vx = (Math.random() < 0.5 ? -1 : 1) * (2.8 + Math.min(score * 0.02, 2));
+  ball.vy = -3.6 - Math.min(score * 0.02, 2);
+}
+
+function resetGame() {
+  paddle.x = GW / 2 - paddle.w / 2;
+  score = 0;
+  lives = 3;
+  buildBricks();
+  resetBall();
+  updateHud();
+}
+
+function updateHud() {
+  gameScoreEl.textContent = score;
+  gameLivesEl.textContent = '❤️'.repeat(Math.max(lives, 0)) || '💀';
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function brickFeedback(color) {
+  const rgb = hexToRgb(color);
+  sendLight(...rgb);
+  setPanelGlow('game', ...rgb);
+  playSound('brick', 'game');
+  clearTimeout(brickFeedbackTimer);
+  brickFeedbackTimer = setTimeout(() => {
+    if (gState === 'playing') { sendLight(...IDLE_COLOR); setPanelGlow('game', ...IDLE_COLOR); }
+  }, 150);
+}
+
+function lifeLostFeedback() {
+  sendLight(255, 0, 0, 3, 3, 70, 40);
+  setPanelGlow('game', 255, 0, 0);
+  playSound('lifelost', 'game');
+  setTimeout(() => { if (gState === 'playing') { sendLight(...IDLE_COLOR, 0, 0, 0, 0); setPanelGlow('game', ...IDLE_COLOR); } }, 160);
+}
+
+function gameWin() {
+  gState = 'won';
+  stopPulse();
+  clearTimeout(brickFeedbackTimer);
+
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('ds4breaker-highscore', String(highScore));
+    gameHighEl.textContent = highScore;
+  }
+
+  const seq = [[255,215,0],[0,255,120],[0,150,255],[255,215,0]];
+  let i = 0;
+  sendLight(...seq[0], 0, 0, 0, 180);
+  setPanelGlow('game', ...seq[0]);
+  pulseTimer = setInterval(() => {
+    i = (i + 1) % seq.length;
+    sendLight(...seq[i]);
+    setPanelGlow('game', ...seq[i]);
+  }, 300);
+
+  playSound('gamewin', 'game');
+  gameStartBtn.textContent = t('game-again');
+  gameStartBtn.disabled = false;
+  drawGame();
+}
+
+function gameOver() {
+  gState = 'over';
+  stopPulse();
+  clearTimeout(brickFeedbackTimer);
+  const isHighScore = score > highScore;
+  if (isHighScore) {
+    highScore = score;
+    localStorage.setItem('ds4breaker-highscore', String(highScore));
+    gameHighEl.textContent = highScore;
+    const seq = [[255,215,0],[0,255,120],[0,150,255],[255,215,0]];
+    let i = 0;
+    sendLight(...seq[0], 0, 0, 0, 180);
+    setPanelGlow('game', ...seq[0]);
+    playSound('gamewin', 'game');
+    pulseTimer = setInterval(() => {
+      i = (i + 1) % seq.length;
+      sendLight(...seq[i]);
+      setPanelGlow('game', ...seq[i]);
+    }, 300);
+  } else {
+    sendLight(255, 0, 0, 0, 0, 100, 60);
+    setPanelGlow('game', 255, 0, 0);
+    playSound('gameover', 'game');
+    setTimeout(() => { if (gState !== 'playing') { sendLight(...IDLE_COLOR, 0, 0, 0, 0); setPanelGlow('game', ...IDLE_COLOR); } }, 300);
+  }
+  gameStartBtn.textContent = t('game-again');
+  gameStartBtn.disabled = false;
+}
+
+function gameLoop() {
+  if (gState !== 'playing') return;
+
+  if (gamePaused) {
+    drawPauseOverlay();
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  let move = 0;
+  if (keys['ArrowLeft'] || keys['a'] || keys['A']) move -= 1;
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) move += 1;
+
+  if (navigator.getGamepads) {
+    const pads = navigator.getGamepads();
+    for (const gp of pads) {
+      if (!gp) continue;
+      const axis = gp.axes[0] || 0;
+      if (Math.abs(axis) > 0.15) move += axis; // left stick, analog
+      if (gp.buttons[14] && gp.buttons[14].pressed) move -= 1; // D-pad left
+      if (gp.buttons[15] && gp.buttons[15].pressed) move += 1; // D-pad right
+      break; // first connected gamepad is enough
+    }
+  }
+
+  move = Math.max(-1, Math.min(1, move));
+  paddle.x += move * paddle.speed;
+  paddle.x = Math.max(0, Math.min(GW - paddle.w, paddle.x));
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -1; }
+  if (ball.x + ball.r > GW) { ball.x = GW - ball.r; ball.vx *= -1; }
+  if (ball.y - ball.r < 0) { ball.y = ball.r; ball.vy *= -1; }
+
+  // Paddle collision
+  if (ball.vy > 0 && ball.y + ball.r >= paddle.y && ball.y + ball.r <= paddle.y + paddle.h &&
+      ball.x >= paddle.x && ball.x <= paddle.x + paddle.w) {
+    const hitPos = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2); // -1..1
+    ball.vy = -Math.abs(ball.vy);
+    ball.vx = hitPos * 4.5;
+    ball.y = paddle.y - ball.r;
+  }
+
+  // Brick collisions
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    if (ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w &&
+        ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h) {
+      b.alive = false;
+      score++;
+      updateHud();
+      brickFeedback(b.color);
+      ball.vy *= -1;
+      break;
+    }
+  }
+
+  // Ball dropped below paddle
+  if (ball.y - ball.r > GH) {
+    lives--;
+    updateHud();
+    lifeLostFeedback();
+    if (lives <= 0) {
+      gameOver();
+    } else {
+      resetBall();
+    }
+  }
+
+  // Cleared the whole wall — that's a win
+  if (bricks.every(b => !b.alive)) {
+    gameWin();
+    return;
+  }
+
+  drawGame();
+  if (gState === 'playing') requestAnimationFrame(gameLoop);
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, GW, GH);
+  ctx.fillStyle = '#060810';
+  ctx.fillRect(0, 0, GW, GH);
+
+  bricks.forEach(b => {
+    if (!b.alive) return;
+    ctx.fillStyle = b.color;
+    ctx.shadowColor = b.color;
+    ctx.shadowBlur = 8;
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+  });
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#3b82f6';
+  ctx.shadowColor = '#3b82f6';
+  ctx.shadowBlur = 14;
+  ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+  ctx.shadowBlur = 0;
+
+  ctx.beginPath();
+  ctx.fillStyle = '#e8ecf5';
+  ctx.shadowColor = '#e8ecf5';
+  ctx.shadowBlur = 10;
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  if (gState === 'over' || gState === 'won') {
+    ctx.fillStyle = 'rgba(6,8,16,.75)';
+    ctx.fillRect(0, 0, GW, GH);
+    ctx.fillStyle = gState === 'won' ? '#ffd700' : '#e8ecf5';
+    ctx.font = 'bold 26px Cairo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(gState === 'won' ? t('game-win-text') : t('game-over-text'), GW / 2, GH / 2 - 10);
+    ctx.font = '15px Cairo, sans-serif';
+    ctx.fillStyle = '#7a8399';
+    ctx.fillText(`${t('game-score-canvas')}: ${score}`, GW / 2, GH / 2 + 20);
+  }
+}
+
+function drawPauseOverlay() {
+  drawGame();
+  ctx.fillStyle = 'rgba(6,8,16,.72)';
+  ctx.fillRect(0, 0, GW, GH);
+  ctx.fillStyle = '#e8ecf5';
+  ctx.font = 'bold 24px Cairo, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(t('game-paused-text'), GW / 2, GH / 2 - 34);
+
+  const options = [t('game-resume'), t('game-quit')];
+  options.forEach((label, i) => {
+    const y = GH / 2 + i * 38;
+    if (i === pauseMenuIndex) {
+      ctx.fillStyle = 'rgba(59,130,246,.28)';
+      ctx.fillRect(GW / 2 - 95, y - 22, 190, 32);
+      ctx.fillStyle = '#7dd3fc';
+    } else {
+      ctx.fillStyle = '#9aa3b5';
+    }
+    ctx.font = '17px Cairo, sans-serif';
+    ctx.fillText(label, GW / 2, y);
+  });
+
+  ctx.font = '12px Cairo, sans-serif';
+  ctx.fillStyle = '#7a8399';
+  ctx.fillText(t('game-paused-hint'), GW / 2, GH / 2 + 96);
+}
+
+function togglePause() {
+  if (gState !== 'playing') return;
+  gamePaused = !gamePaused;
+  if (gamePaused) {
+    pauseMenuIndex = 0;
+    drawPauseOverlay();
+  }
+}
+
+function selectPauseMenu(idx) {
+  const clamped = Math.max(0, Math.min(1, idx));
+  if (clamped === pauseMenuIndex) return;
+  pauseMenuIndex = clamped;
+  playNavBlip();
+  drawPauseOverlay();
+}
+
+function confirmPauseMenu() {
+  if (pauseMenuIndex === 0) {
+    gamePaused = false;
+    requestAnimationFrame(gameLoop);
+  } else {
+    quitGame();
+  }
+}
+
+function quitGame() {
+  gState = 'idle';
+  gamePaused = false;
+  stopPulse();
+  resetAllPanelGlows();
+  gameStage.classList.remove('expanded');
+  gameCanvas.classList.remove('expanded');
+  gameStartBtn.disabled = false;
+  gameStartBtn.textContent = t('game-start');
+  if (device) transitionToColor(...IDLE_COLOR);
+  drawGame();
+}
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { togglePause(); return; }
+  if (gState === 'playing' && gamePaused) {
+    if (e.key === 'ArrowUp') { selectPauseMenu(pauseMenuIndex - 1); e.preventDefault(); }
+    else if (e.key === 'ArrowDown') { selectPauseMenu(pauseMenuIndex + 1); e.preventDefault(); }
+    else if (e.key === 'Enter') { confirmPauseMenu(); e.preventDefault(); }
+  }
+});
+
+gameStartBtn.addEventListener('click', () => {
+  playUiClick('game-start');
+  stopPulse();
+  resetAllPanelGlows();
+  resetGame();
+  gState = 'playing';
+  gamePaused = false;
+  gameStartBtn.disabled = true;
+  gameStartBtn.textContent = t('game-playing');
+  if (device) sendLight(...IDLE_COLOR);
+  gameStage.classList.add('expanded');
+  gameCanvas.classList.add('expanded');
+  setTimeout(() => {
+    gameCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 620); // just past the .6s expand transition, so it centers on the final size
+  requestAnimationFrame(gameLoop);
+});
+
+drawGame();
+// ==================== Gamepad page navigation ====================
+// Runs continuously (not just during the demo game). While the game is
+// actively being played, the D-pad/stick + ✕ are left alone for paddle
+// control; the Start/Options button always toggles pause regardless.
+function getGamepadFocusables() {
+  return Array.from(document.querySelectorAll(
+    '.connect-btn:not(:disabled), .event-btn:not(:disabled), .lang-toggle button, .player-led-btn:not(:disabled), .mute-led-btn:not(:disabled), #gameStartBtn:not(:disabled)'
+  ));
+}
+
+let gamepadFocusIndex = -1;
+let gamepadFocusEls = [];
+
+// Finds whichever candidate sits most directly in `direction` from `current`,
+// using real on-screen positions — not DOM order — so ⬆️➡️⬇️⬅️ all move
+// the way they visually look like they should, including across a grid of buttons.
+function findNextInDirection(current, direction, candidates) {
+  const rect = current.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+
+  let best = null, bestScore = Infinity;
+  candidates.forEach(el => {
+    if (el === current) return;
+    const r = el.getBoundingClientRect();
+    const ex = r.left + r.width / 2, ey = r.top + r.height / 2;
+    const dx = ex - cx, dy = ey - cy;
+
+    let inDirection = false, primary = 0, perpendicular = 0;
+    if (direction === 'up')    { inDirection = dy < -4; primary = -dy; perpendicular = Math.abs(dx); }
+    if (direction === 'down')  { inDirection = dy > 4;  primary = dy;  perpendicular = Math.abs(dx); }
+    if (direction === 'left')  { inDirection = dx < -4; primary = -dx; perpendicular = Math.abs(dy); }
+    if (direction === 'right') { inDirection = dx > 4;  primary = dx;  perpendicular = Math.abs(dy); }
+    if (!inDirection) return;
+
+    const score = primary + perpendicular * 2.2; // favor targets roughly aligned with the current one
+    if (score < bestScore) { bestScore = score; best = el; }
+  });
+
+  return best;
+}
+
+function setGamepadFocus(index) {
+  gamepadFocusEls.forEach(el => el.classList.remove('gamepad-focus'));
+  if (index < 0 || index >= gamepadFocusEls.length) return;
+
+  const el = gamepadFocusEls[index];
+  el.classList.add('gamepad-focus');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+  playNavBlip();
+}
+
+function navigateGamepadFocus(direction) {
+  setInputMethod('gamepad');
+  gamepadFocusEls = getGamepadFocusables();
+  if (!gamepadFocusEls.length) return;
+
+  const current = (gamepadFocusIndex >= 0 && gamepadFocusIndex < gamepadFocusEls.length)
+    ? gamepadFocusEls[gamepadFocusIndex] : null;
+
+  const next = current ? (findNextInDirection(current, direction, gamepadFocusEls) || current) : gamepadFocusEls[0];
+  gamepadFocusIndex = gamepadFocusEls.indexOf(next);
+  setGamepadFocus(gamepadFocusIndex);
+}
+
+// ---- Input-method tracking: while the gamepad is actively navigating, mouse
+// hover (CSS :hover and the JS preview it would otherwise trigger) is
+// suppressed — a mouse cursor left sitting over some button shouldn't fight
+// with gamepad-driven focus. A genuine mouse move switches back immediately.
+function setInputMethod(method) {
+  document.body.classList.toggle('gamepad-nav-active', method === 'gamepad');
+}
+window.addEventListener('mousemove', () => setInputMethod('mouse'));
+
+const prevPad = { up: false, down: false, left: false, right: false, cross: false, start: false, circle: false };
+const PAD_AXIS_THRESHOLD = 0.5;
+
+function gamepadNavLoop() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = pads && pads[0];
+
+  if (gp && currentMode === 'lightbar') {
+    const startPressed = !!(gp.buttons[9] && gp.buttons[9].pressed);
+    if (startPressed && !prevPad.start) togglePause();
+    prevPad.start = startPressed;
+
+    // Circle (○) — the button whose symbol now sits on the Stop pill — stops
+    // any running effect directly, same as clicking it, from anywhere on the page.
+    const circlePressed = !!(gp.buttons[1] && gp.buttons[1].pressed);
+    if (circlePressed && !prevPad.circle && !stopBtn.disabled) stopBtn.click();
+    prevPad.circle = circlePressed;
+
+    if (gState === 'playing' && gamePaused) {
+      // Pause menu: the D-pad/stick up-down and ✕ are otherwise unused while
+      // paused (the paddle only ever moves left-right), so we reuse them here.
+      const axisY = gp.axes[1] || 0;
+      const up = !!(gp.buttons[12] && gp.buttons[12].pressed) || axisY < -PAD_AXIS_THRESHOLD;
+      const down = !!(gp.buttons[13] && gp.buttons[13].pressed) || axisY > PAD_AXIS_THRESHOLD;
+      const cross = !!(gp.buttons[0] && gp.buttons[0].pressed);
+
+      if (up && !prevPad.up) selectPauseMenu(pauseMenuIndex - 1);
+      if (down && !prevPad.down) selectPauseMenu(pauseMenuIndex + 1);
+      if (cross && !prevPad.cross) confirmPauseMenu();
+
+      prevPad.up = up;
+      prevPad.down = down;
+      prevPad.cross = cross;
+    } else if (gState !== 'playing') {
+      const axisX = gp.axes[0] || 0;
+      const axisY = gp.axes[1] || 0;
+
+      const up    = !!(gp.buttons[12] && gp.buttons[12].pressed) || axisY < -PAD_AXIS_THRESHOLD;
+      const down  = !!(gp.buttons[13] && gp.buttons[13].pressed) || axisY > PAD_AXIS_THRESHOLD;
+      const left  = !!(gp.buttons[14] && gp.buttons[14].pressed) || axisX < -PAD_AXIS_THRESHOLD;
+      const right = !!(gp.buttons[15] && gp.buttons[15].pressed) || axisX > PAD_AXIS_THRESHOLD;
+      const cross = !!(gp.buttons[0] && gp.buttons[0].pressed);
+
+      // Each direction only fires once per press/tilt (edge-detected), so a
+      // single nudge = a single gentle, smooth-scrolled step — never a flood.
+      if (up && !prevPad.up) navigateGamepadFocus('up');
+      if (down && !prevPad.down) navigateGamepadFocus('down');
+      if (left && !prevPad.left) navigateGamepadFocus('left');
+      if (right && !prevPad.right) navigateGamepadFocus('right');
+      if (cross && !prevPad.cross && gamepadFocusEls[gamepadFocusIndex]) {
+        gamepadFocusEls[gamepadFocusIndex].click();
+      }
+
+      prevPad.up = up;
+      prevPad.down = down;
+      prevPad.left = left;
+      prevPad.right = right;
+      prevPad.cross = cross;
+    }
+  }
+
+  requestAnimationFrame(gamepadNavLoop);
+}
+requestAnimationFrame(gamepadNavLoop);
+
+loadPanelVolumes();
+initVolumeSliders();
+setLanguage(currentLang);
+
+// ==================== 3D Hand Test mode ====================
+let micAvailable = false;
+let activeKind3d = null; // 'ds4' | 'dualsense' | 'xbox' | null
+let currentMode = 'lightbar'; // 'lightbar' | '3d' — gates which gamepad loop is "live"
+
+// ---- Procedural controller models (built once THREE is available) ----
+function roundedBoxGeo3d(w, h, d, radius, seg = 4) {
+  const THREE = window.THREE;
+  const shape = new THREE.Shape();
+  const x = -w / 2, y = -h / 2;
+  const r = Math.min(radius, w / 2, h / 2);
+  shape.moveTo(x, y + r);
+  shape.lineTo(x, y + h - r);
+  shape.quadraticCurveTo(x, y + h, x + r, y + h);
+  shape.lineTo(x + w - r, y + h);
+  shape.quadraticCurveTo(x + w, y + h, x + w, y + h - r);
+  shape.lineTo(x + w, y + r);
+  shape.quadraticCurveTo(x + w, y, x + w - r, y);
+  shape.lineTo(x + r, y);
+  shape.quadraticCurveTo(x, y, x, y + r);
+  return new THREE.ExtrudeGeometry(shape, { depth: d, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: seg, curveSegments: seg });
+}
+function makeButton3d(radius, color, height = 0.05) {
+  const THREE = window.THREE;
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius, radius, height, 20),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.1 })
+  );
+  mesh.rotation.x = Math.PI / 2;
+  mesh.userData.baseColor = color;
+  return mesh;
+}
+function placeButton3d(mesh, x, y, z) {
+  mesh.position.set(x, y, z);
+  mesh.userData.baseY = y;
+  return mesh;
+}
+function makeStick3d(baseColor) {
+  const THREE = window.THREE;
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.1, 24), new THREE.MeshStandardMaterial({ color: 0x14171f, roughness: 0.6 }));
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 16), new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.5 }));
+  cap.position.y = 0.13; cap.scale.y = 0.7;
+  group.add(base, cap);
+  return group;
+}
+
+function buildPlayStationBody3d(kind) {
+  const THREE = window.THREE;
+  const group = new THREE.Group();
+  const isDS = kind === 'dualsense';
+  const bodyColor = isDS ? 0xe9ecf1 : 0x2b3040;
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.55, metalness: 0.08 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x1b1e27, roughness: 0.55, metalness: 0.1 });
+
+  const body = new THREE.Mesh(roundedBoxGeo3d(3.2, 1.5, 0.5, 0.35, 5), bodyMat);
+  group.add(body);
+
+  const gripGeo = new THREE.CapsuleGeometry(0.42, 1.15, 8, 16);
+  const gripL = new THREE.Mesh(gripGeo, isDS ? darkMat : bodyMat);
+  gripL.position.set(-1.15, -0.95, 0); gripL.rotation.z = 0.32;
+  const gripR = gripL.clone(); gripR.position.x = 1.15; gripR.rotation.z = -0.32;
+  group.add(gripL, gripR);
+
+  const touchpad = new THREE.Mesh(roundedBoxGeo3d(1.5, 0.62, 0.06, 0.12, 3), new THREE.MeshStandardMaterial({ color: 0x0e1017, roughness: 0.3, metalness: 0.2 }));
+  touchpad.position.set(0, 0.28, 0.29);
+  group.add(touchpad);
+
+  let lightbar;
+  if (isDS) {
+    lightbar = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.08, 0.1), new THREE.MeshStandardMaterial({ color: 0x2266ff, emissive: 0x2266ff, emissiveIntensity: 1.4, roughness: 0.3 }));
+    lightbar.position.set(0, 0.63, 0.32);
+  } else {
+    lightbar = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.09, 0.14), new THREE.MeshStandardMaterial({ color: 0x2266ff, emissive: 0x2266ff, emissiveIntensity: 1.4, roughness: 0.3 }));
+    lightbar.position.set(0, 0.79, 0.1);
+  }
+  group.add(lightbar);
+
+  const stickL = makeStick3d(0x33384a); stickL.position.set(-0.62, 0.15, 0.32);
+  const stickR = makeStick3d(0x33384a); stickR.position.set(0.28, -0.32, 0.32);
+  group.add(stickL, stickR);
+
+  const faceColors = { triangle: 0x22d3a8, circle: 0xef4a6a, cross: 0x5fa8ff, square: 0xff8fd8 };
+  const btnTriangle = makeButton3d(0.15, faceColors.triangle); placeButton3d(btnTriangle, 1.32, 0.42, 0.32);
+  const btnCircle = makeButton3d(0.15, faceColors.circle); placeButton3d(btnCircle, 1.55, 0.15, 0.32);
+  const btnCross = makeButton3d(0.15, faceColors.cross); placeButton3d(btnCross, 1.32, -0.12, 0.32);
+  const btnSquare = makeButton3d(0.15, faceColors.square); placeButton3d(btnSquare, 1.09, 0.15, 0.32);
+  group.add(btnTriangle, btnCircle, btnCross, btnSquare);
+
+  const dpadMat = () => new THREE.MeshStandardMaterial({ color: 0x2c303c, roughness: 0.5 });
+  const dpadUp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.08), dpadMat()); dpadUp.position.set(-1.15, 0.55, 0.32);
+  const dpadDown = dpadUp.clone(); dpadDown.material = dpadMat(); dpadDown.position.set(-1.15, 0.05, 0.32);
+  const dpadLeft = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.08), dpadMat()); dpadLeft.position.set(-1.40, 0.30, 0.32);
+  const dpadRight = dpadLeft.clone(); dpadRight.material = dpadMat(); dpadRight.position.set(-0.90, 0.30, 0.32);
+  group.add(dpadUp, dpadDown, dpadLeft, dpadRight);
+
+  const shoulderMat = () => new THREE.MeshStandardMaterial({ color: 0x272b36, roughness: 0.5 });
+  const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.28), shoulderMat()); l1.position.set(-1.15, 0.92, -0.1);
+  const r1 = l1.clone(); r1.material = shoulderMat(); r1.position.x = 1.15;
+  group.add(l1, r1);
+
+  const triggerGeo = new THREE.BoxGeometry(0.55, 0.14, 0.4);
+  const l2 = new THREE.Mesh(triggerGeo, shoulderMat()); l2.position.set(-1.15, 1.05, -0.42); l2.rotation.x = -0.35;
+  const r2 = l2.clone(); r2.material = shoulderMat(); r2.position.x = 1.15;
+  group.add(l2, r2);
+
+  group.userData.parts = {
+    lightbar, touchpad, stickL, stickR, l1, r1, l2, r2,
+    buttons: { triangle: btnTriangle, circle: btnCircle, cross: btnCross, square: btnSquare },
+    dpad: { up: dpadUp, down: dpadDown, left: dpadLeft, right: dpadRight },
+  };
+  group.scale.setScalar(0.62);
+  return group;
+}
+
+function buildXboxBody3d() {
+  const THREE = window.THREE;
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x22252b, roughness: 0.55, metalness: 0.12 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.6 });
+
+  const body = new THREE.Mesh(roundedBoxGeo3d(3.3, 1.4, 0.5, 0.4, 5), bodyMat);
+  group.add(body);
+
+  const gripGeo = new THREE.CapsuleGeometry(0.46, 1.25, 8, 16);
+  const gripL = new THREE.Mesh(gripGeo, darkMat); gripL.position.set(-1.2, -1.0, 0); gripL.rotation.z = 0.36;
+  const gripR = gripL.clone(); gripR.position.x = 1.2; gripR.rotation.z = -0.36;
+  group.add(gripL, gripR);
+
+  const stickL = makeStick3d(0x2c2f38); stickL.position.set(-0.95, 0.35, 0.32);
+  const stickR = makeStick3d(0x2c2f38); stickR.position.set(0.35, -0.35, 0.32);
+  group.add(stickL, stickR);
+
+  const dpadMat = () => new THREE.MeshStandardMaterial({ color: 0x2c303c, roughness: 0.5 });
+  const dpadUp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.08), dpadMat()); dpadUp.position.set(-0.95, -0.55, 0.32);
+  const dpadDown = dpadUp.clone(); dpadDown.material = dpadMat(); dpadDown.position.set(-0.95, -1.05, 0.32);
+  const dpadLeft = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.08), dpadMat()); dpadLeft.position.set(-1.20, -0.80, 0.32);
+  const dpadRight = dpadLeft.clone(); dpadRight.material = dpadMat(); dpadRight.position.set(-0.70, -0.80, 0.32);
+  group.add(dpadUp, dpadDown, dpadLeft, dpadRight);
+
+  const faceColors = { a: 0x3ddc6b, b: 0xef4a4a, x: 0x4a8fef, y: 0xf5cf3d };
+  const btnY = makeButton3d(0.15, faceColors.y); placeButton3d(btnY, 1.15, 0.42, 0.32);
+  const btnB = makeButton3d(0.15, faceColors.b); placeButton3d(btnB, 1.38, 0.15, 0.32);
+  const btnA = makeButton3d(0.15, faceColors.a); placeButton3d(btnA, 1.15, -0.12, 0.32);
+  const btnX = makeButton3d(0.15, faceColors.x); placeButton3d(btnX, 0.92, 0.15, 0.32);
+  group.add(btnY, btnB, btnA, btnX);
+
+  const shoulderMat = () => new THREE.MeshStandardMaterial({ color: 0x272b36, roughness: 0.5 });
+  const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.28), shoulderMat()); l1.position.set(-1.2, 0.85, -0.1);
+  const r1 = l1.clone(); r1.material = shoulderMat(); r1.position.x = 1.2;
+  group.add(l1, r1);
+
+  const triggerGeo = new THREE.BoxGeometry(0.55, 0.14, 0.4);
+  const l2 = new THREE.Mesh(triggerGeo, shoulderMat()); l2.position.set(-1.2, 0.98, -0.42); l2.rotation.x = -0.35;
+  const r2 = l2.clone(); r2.material = shoulderMat(); r2.position.x = 1.2;
+  group.add(l2, r2);
+
+  group.userData.parts = {
+    lightbar: null, touchpad: null, stickL, stickR, l1, r1, l2, r2,
+    buttons: { triangle: btnY, circle: btnB, cross: btnA, square: btnX },
+    dpad: { up: dpadUp, down: dpadDown, left: dpadLeft, right: dpadRight },
+  };
+  group.scale.setScalar(0.62);
+  return group;
+}
+
+// ---- Three.js scene (lazy init — waits for the module loader if needed) ----
+let scene3d, camera3d, renderer3d, currentModel3d;
+let threeDReady = false;
+let orientPitch3d = 0, orientRoll3d = 0, orientYaw3d = 0, lastMotionTime3d = null;
+let rumbleUntil3d = 0;
+const GYRO_SCALE_3D = 1 / 1024;
+
+function initThreeDScene() {
+  if (threeDReady) return;
+  const THREE = window.THREE;
+  renderer3d = new THREE.WebGLRenderer({ canvas: stage3dCanvas, antialias: true, alpha: true });
+  renderer3d.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  scene3d = new THREE.Scene();
+  camera3d = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+  camera3d.position.set(0, 0.35, 6.2);
+  camera3d.lookAt(0, 0, 0);
+
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.6); keyLight.position.set(3, 4, 5); scene3d.add(keyLight);
+  const fillLight = new THREE.DirectionalLight(0x8899ff, 0.5); fillLight.position.set(-4, -1, 2); scene3d.add(fillLight);
+  const rimLight = new THREE.DirectionalLight(0xff6644, 0.35); rimLight.position.set(-2, 3, -4); scene3d.add(rimLight);
+  scene3d.add(new THREE.AmbientLight(0x404050, 0.7));
+
+  new ResizeObserver(resizeStage3d).observe(stage3dCanvas);
+  threeDReady = true;
+  requestAnimationFrame(animate3d);
+}
+
+function resizeStage3d() {
+  if (!threeDReady) return;
+  const w = stage3dCanvas.clientWidth, h = stage3dCanvas.clientHeight;
+  if (w === 0 || h === 0) return;
+  renderer3d.setSize(w, h, false);
+  camera3d.aspect = w / h;
+  camera3d.updateProjectionMatrix();
+}
+
+function loadModelFor(kind) {
+  if (!threeDReady) { initThreeDScene(); }
+  if (currentModel3d) scene3d.remove(currentModel3d);
+  if (kind === 'ds4') currentModel3d = buildPlayStationBody3d('ds4');
+  else if (kind === 'dualsense') currentModel3d = buildPlayStationBody3d('dualsense');
+  else if (kind === 'xbox') currentModel3d = buildXboxBody3d();
+  else return;
+  scene3d.add(currentModel3d);
+  activeKind3d = kind;
+  buildGlyphGrid3d(kind);
+  updateStageHint3d();
+}
+
+function updateStageHint3d() {
+  if (!activeKind3d) { stageHint.textContent = t('stage-hint'); return; }
+  stageHint.textContent = t('stage-hint-' + activeKind3d);
+}
+
+const GLYPH_SETS_3D = {
+  ds4:       [['triangle','△'],['circle','○'],['cross','✕'],['square','▢'],['l1','L1'],['r1','R1'],['dpadUp','↑'],['dpadDown','↓'],['dpadLeft','←'],['dpadRight','→']],
+  dualsense: [['triangle','△'],['circle','○'],['cross','✕'],['square','▢'],['l1','L1'],['r1','R1'],['dpadUp','↑'],['dpadDown','↓'],['dpadLeft','←'],['dpadRight','→']],
+  xbox:      [['triangle','Y'],['circle','B'],['cross','A'],['square','X'],['l1','LB'],['r1','RB'],['dpadUp','↑'],['dpadDown','↓'],['dpadLeft','←'],['dpadRight','→']],
+};
+let glyphEls3d = {};
+function buildGlyphGrid3d(kind) {
+  btnGlyphs.innerHTML = '';
+  glyphEls3d = {};
+  const set = GLYPH_SETS_3D[kind] || GLYPH_SETS_3D.ds4;
+  set.forEach(([key, label]) => {
+    const el = document.createElement('div');
+    el.className = 'btn-glyph';
+    el.textContent = label;
+    btnGlyphs.appendChild(el);
+    glyphEls3d[key] = el;
+  });
+}
+
+function updateFeatureAvailability3d() {
+  micBtn.disabled = !micAvailable;
+  micBtn.title = micAvailable ? t('mic-btn') : t('mic-btn-unavailable');
+}
+
+function applyMotion3d(gyro, accel) {
+  const now = performance.now();
+  if (lastMotionTime3d === null) { lastMotionTime3d = now; return; }
+  const dt = Math.min((now - lastMotionTime3d) / 1000, 0.1);
+  lastMotionTime3d = now;
+
+  orientPitch3d += (gyro.x * GYRO_SCALE_3D) * dt;
+  orientRoll3d  += (gyro.y * GYRO_SCALE_3D) * dt;
+  orientYaw3d   += (gyro.z * GYRO_SCALE_3D) * dt;
+
+  const ax = accel.x, ay = accel.y, az = accel.z;
+  const mag = Math.sqrt(ax * ax + ay * ay + az * az);
+  if (mag > 1000) {
+    const accelPitch = Math.atan2(ax, Math.sqrt(ay * ay + az * az));
+    const accelRoll = Math.atan2(ay, Math.sqrt(ax * ax + az * az));
+    const CORRECTION = 0.02;
+    orientPitch3d = orientPitch3d * (1 - CORRECTION) + accelPitch * CORRECTION;
+    orientRoll3d = orientRoll3d * (1 - CORRECTION) + accelRoll * CORRECTION;
+  }
+}
+
+function handleTriggerRumble3d(l2, r2) {
+  if (l2 > 0.95 && !inputState3d._l2WasFull) sendLightRumbleOnly(90, 40, 90);
+  if (r2 > 0.95 && !inputState3d._r2WasFull) sendLightRumbleOnly(40, 130, 110);
+  inputState3d._l2WasFull = l2 > 0.95;
+  inputState3d._r2WasFull = r2 > 0.95;
+}
+async function sendLightRumbleOnly(weak, strong, durationMs = 140) {
+  if (!device || !device.opened) return;
+  rumbleUntil3d = performance.now() + durationMs;
+  await sendLight(...IDLE_COLOR, 0, 0, weak, strong);
+}
+
+recalBtnOverlay.addEventListener('click', () => {
+  orientPitch3d = 0; orientRoll3d = 0; orientYaw3d = 0;
+  lastMotionTime3d = null;
+});
+
+function updateButtonVisuals3d(buttons, parts) {
+  const map = { triangle: 'triangle', circle: 'circle', cross: 'cross', square: 'square' };
+  Object.keys(map).forEach(k => {
+    const pressed = !!buttons[k];
+    if (glyphEls3d[k]) glyphEls3d[k].classList.toggle('active', pressed);
+    const mesh = parts.buttons[map[k]];
+    if (mesh) {
+      mesh.position.y = mesh.userData.baseY - (pressed ? 0.035 : 0);
+      mesh.material.emissive = new window.THREE.Color(pressed ? mesh.userData.baseColor : 0x000000);
+      mesh.material.emissiveIntensity = pressed ? 0.9 : 0;
+    }
+  });
+  ['dpadUp', 'dpadDown', 'dpadLeft', 'dpadRight'].forEach(k => {
+    const pressed = !!buttons[k];
+    if (glyphEls3d[k]) glyphEls3d[k].classList.toggle('active', pressed);
+    const dirKey = k.replace('dpad', '').toLowerCase();
+    const mesh = parts.dpad[dirKey];
+    if (mesh) mesh.material.color.set(pressed ? 0x3b82f6 : 0x2c303c);
+  });
+  ['l1', 'r1'].forEach(k => {
+    const pressed = !!buttons[k];
+    if (glyphEls3d[k]) glyphEls3d[k].classList.toggle('active', pressed);
+    const mesh = parts[k];
+    if (mesh) mesh.material.color.set(pressed ? 0x3b82f6 : 0x272b36);
+  });
+}
+
+function animate3d() {
+  requestAnimationFrame(animate3d);
+  if (currentMode !== '3d') return; // pause rendering work while this mode isn't visible
+  resizeStage3d();
+
+  if (currentModel3d) {
+    currentModel3d.rotation.x = Math.max(-1.3, Math.min(1.3, orientPitch3d));
+    currentModel3d.rotation.z = Math.max(-1.3, Math.min(1.3, -orientRoll3d));
+    currentModel3d.rotation.y = orientYaw3d % (Math.PI * 2);
+
+    const parts = currentModel3d.userData.parts;
+    if (parts.stickL) parts.stickL.rotation.set(inputState3d.stickLY * 0.5, 0, -inputState3d.stickLX * 0.5);
+    if (parts.stickR) parts.stickR.rotation.set(inputState3d.stickRY * 0.5, 0, -inputState3d.stickRX * 0.5);
+    if (parts.l2) parts.l2.rotation.x = -0.35 + inputState3d.l2 * 0.55;
+    if (parts.r2) parts.r2.rotation.x = -0.35 + inputState3d.r2 * 0.55;
+
+    updateButtonVisuals3d(inputState3d.buttons, parts);
+
+    if (parts.lightbar) {
+      const pulsing = performance.now() < rumbleUntil3d;
+      parts.lightbar.material.color.set(pulsing ? 0xff6644 : 0x2266ff);
+      parts.lightbar.material.emissive.set(pulsing ? 0xff6644 : 0x2266ff);
+    }
+  }
+
+  stickL.style.transform = `translate(calc(-50% + ${inputState3d.stickLX * 12}px), calc(-50% + ${inputState3d.stickLY * 12}px))`;
+  stickR.style.transform = `translate(calc(-50% + ${inputState3d.stickRX * 12}px), calc(-50% + ${inputState3d.stickRY * 12}px))`;
+  l2Fill.style.width = (inputState3d.l2 * 100) + '%';
+  r2Fill.style.width = (inputState3d.r2 * 100) + '%';
+
+  renderer3d.render(scene3d, camera3d);
+}
+
+// ---- Microphone test (DualSense only — real hardware, not HID) ----
+let micStream3d = null, micAudioCtx3d = null, micAnalyser3d = null, micRafId3d = null, micActive3d = false;
+async function startMicTest3d() {
+  try {
+    micStream3d = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micAudioCtx3d = new (window.AudioContext || window.webkitAudioContext)();
+    const source = micAudioCtx3d.createMediaStreamSource(micStream3d);
+    micAnalyser3d = micAudioCtx3d.createAnalyser();
+    micAnalyser3d.fftSize = 512;
+    source.connect(micAnalyser3d);
+    const data = new Uint8Array(micAnalyser3d.frequencyBinCount);
+    const loop = () => {
+      micAnalyser3d.getByteTimeDomainData(data);
+      let peak = 0;
+      for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128));
+      micFill.style.height = Math.min(100, (peak / 128) * 160) + '%';
+      micRafId3d = requestAnimationFrame(loop);
+    };
+    loop();
+    micActive3d = true;
+    micBtn.classList.add('active');
+    micBtn.title = t('mic-btn-stop');
+  } catch (e) {
+    console.error('mic error', e);
+    micActive3d = false;
+  }
+}
+function stopMicTest3d() {
+  if (micRafId3d) cancelAnimationFrame(micRafId3d);
+  if (micStream3d) micStream3d.getTracks().forEach(tr => tr.stop());
+  if (micAudioCtx3d) micAudioCtx3d.close();
+  micStream3d = null; micAudioCtx3d = null; micAnalyser3d = null;
+  micFill.style.height = '0%';
+  micActive3d = false;
+  micBtn.classList.remove('active');
+  micBtn.title = t('mic-btn');
+}
+micBtn.addEventListener('click', () => { if (micActive3d) stopMicTest3d(); else startMicTest3d(); });
+
+// ---- Xbox controller (standard Gamepad API — no lightbar/motion/mic on real Xbox hardware) ----
+let xboxRumbleUntil3d = 0;
+function pollXboxGamepad3d() {
+  if (currentMode === '3d' && (!device || !device.opened)) {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const pad = Array.from(pads).find(p => p && p.mapping === 'standard' && !/dualsense|ps4|ps5|sony|054c/i.test(p.id));
+    if (pad) {
+      if (activeKind3d !== 'xbox') loadModelFor('xbox');
+      inputState3d.stickLX = pad.axes[0] || 0; inputState3d.stickLY = pad.axes[1] || 0;
+      inputState3d.stickRX = pad.axes[2] || 0; inputState3d.stickRY = pad.axes[3] || 0;
+      inputState3d.l2 = (pad.buttons[6] && pad.buttons[6].value) || 0;
+      inputState3d.r2 = (pad.buttons[7] && pad.buttons[7].value) || 0;
+      inputState3d.buttons = {
+        cross: !!(pad.buttons[0] && pad.buttons[0].pressed), circle: !!(pad.buttons[1] && pad.buttons[1].pressed),
+        square: !!(pad.buttons[2] && pad.buttons[2].pressed), triangle: !!(pad.buttons[3] && pad.buttons[3].pressed),
+        l1: !!(pad.buttons[4] && pad.buttons[4].pressed), r1: !!(pad.buttons[5] && pad.buttons[5].pressed),
+        dpadUp: !!(pad.buttons[12] && pad.buttons[12].pressed), dpadDown: !!(pad.buttons[13] && pad.buttons[13].pressed),
+        dpadLeft: !!(pad.buttons[14] && pad.buttons[14].pressed), dpadRight: !!(pad.buttons[15] && pad.buttons[15].pressed),
+      };
+      orientPitch3d *= 0.9; orientRoll3d *= 0.9;
+      const now = performance.now();
+      if ((inputState3d.l2 > 0.95 || inputState3d.r2 > 0.95) && now > xboxRumbleUntil3d && pad.vibrationActuator) {
+        xboxRumbleUntil3d = now + 150;
+        pad.vibrationActuator.playEffect('dual-rumble', { duration: 120, weakMagnitude: inputState3d.l2, strongMagnitude: inputState3d.r2 }).catch(() => {});
+      }
+      dot3d.className = 'dot on';
+      statusText3d.innerHTML = `<b>${pad.id.split('(')[0].trim() || 'Xbox Controller'}</b> ${t('status-connected-suffix')}`;
+      kindTag3d.style.display = 'inline-block';
+      kindTag3d.textContent = 'XBOX · GAMEPAD API';
+      kindTag3d.className = 'mode-tag bt';
+      connectHud3d.classList.add('connected');
+      xboxHudHint.style.display = 'none';
+    }
+  }
+  requestAnimationFrame(pollXboxGamepad3d);
+}
+requestAnimationFrame(pollXboxGamepad3d);
+
+// ---- Mode switcher ----
+function setActiveMode(newMode) {
+  currentMode = newMode;
+  modeLightbarBtn.classList.toggle('active', newMode === 'lightbar');
+  mode3dBtn.classList.toggle('active', newMode === '3d');
+  lightbarModeEl.style.display = newMode === 'lightbar' ? '' : 'none';
+  threeDModeEl.style.display = newMode === '3d' ? '' : 'none';
+  if (newMode === '3d') {
+    if (window.THREE) initThreeDScene();
+    else window.addEventListener('three-ready', initThreeDScene, { once: true });
+    if (deviceKind && device && device.opened) loadModelFor(deviceKind);
+  }
+}
+modeLightbarBtn.addEventListener('click', () => setActiveMode('lightbar'));
+mode3dBtn.addEventListener('click', () => setActiveMode('3d'));
+
+</script>
+</body>
+</html>
