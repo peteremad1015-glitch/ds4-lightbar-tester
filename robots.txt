@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://ps-controller-tester.github.io/sitemap.xml
